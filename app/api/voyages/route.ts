@@ -12,13 +12,13 @@ async function authenticate(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const user = await authenticate(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  return NextResponse.json(getVoyages());
+  return NextResponse.json(await getVoyages());
 }
 
 export async function POST(req: NextRequest) {
   const user = await authenticate(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const voyage: Voyage = await req.json();
-  saveVoyage(voyage);
+  await saveVoyage(voyage);
   return NextResponse.json(voyage, { status: 201 });
 }

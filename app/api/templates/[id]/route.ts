@@ -11,6 +11,6 @@ async function authenticate(req: NextRequest) {
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const user = await authenticate(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  deleteTemplate(params.id);
+  await deleteTemplate(params.id);
   return NextResponse.json({ ok: true });
 }
