@@ -60,7 +60,7 @@ export function Sidebar({ voyages, loading }: Props) {
           <img
             src="https://core-shipping.com/uploads/logo.png"
             alt="Core Shipping"
-            style={{ height: 36, width: 'auto', maxWidth: 140, filter: 'brightness(0) invert(1)' }}
+            style={{ maxHeight: 28, width: 'auto', filter: 'brightness(0) invert(1)' }}
           />
         )}
         {collapsed && <Ship className="h-5 w-5 text-primary mx-auto" />}
