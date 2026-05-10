@@ -14,12 +14,20 @@ export interface Port {
   isSuez?: boolean;
 }
 
+export interface CargoPort {
+  portName: string;
+  proformaDa: number;
+  finalDa: number;
+}
+
 export interface Cargo {
   id: string;
   cargoType: CargoType;
   quantity: number;
   loadingPorts: string[];
   dischargingPorts: string[];
+  loadingPortDAs: CargoPort[];
+  dischargingPortDAs: CargoPort[];
   chartererName: string;
   chartererAddress: string;
   freightRate: number;
