@@ -1,0 +1,340 @@
+[
+  {
+    "id": "v001",
+    "voyageNumber": "VOY-2025-001",
+    "vesselName": "MV Atlantic Star",
+    "vesselType": "Bulk Carrier",
+    "vesselSpeed": 13.5,
+    "laydaysStart": "2025-01-05",
+    "cancellingDate": "2025-01-12",
+    "status": "closed",
+    "cargoes": [
+      {
+        "id": "c001",
+        "cargoType": "grain",
+        "quantity": 52000,
+        "loadingPorts": ["Rotterdam"],
+        "dischargingPorts": ["Alexandria"],
+        "chartererName": "Cargill International",
+        "chartererAddress": "9 West 57th St, New York, USA",
+        "freightRate": 38.5,
+        "freightType": "per_mt",
+        "brokeragePercent": 2.5
+      }
+    ],
+    "portRotation": [
+      { "id": "pc001", "portId": "NLRTM", "portName": "Rotterdam", "role": "load", "eta": "2025-01-06", "etd": "2025-01-09", "isBosphorus": false, "isDardanelles": false, "isSuez": false },
+      { "id": "pc002", "portId": "TRCSK", "portName": "Canakkale (Dardanelles)", "role": "transit", "eta": "2025-01-16", "etd": "2025-01-16", "isBosphorus": false, "isDardanelles": true, "isSuez": false },
+      { "id": "pc003", "portId": "TRIST", "portName": "Istanbul", "role": "transit", "eta": "2025-01-17", "etd": "2025-01-17", "isBosphorus": true, "isDardanelles": false, "isSuez": false },
+      { "id": "pc004", "portId": "EGALY", "portName": "Alexandria", "role": "discharge", "eta": "2025-01-22", "etd": "2025-01-25", "isBosphorus": false, "isDardanelles": false, "isSuez": false }
+    ],
+    "costs": [
+      { "id": "co001", "portCallId": "pc001", "portName": "Rotterdam", "proformaDa": 42000, "finalDa": 44500, "proformaLashing": 8500, "finalLashing": 9200, "pilotage": 3200, "towage": 2800, "agencyFee": 1800, "otherCosts": 0 },
+      { "id": "co002", "portCallId": "pc004", "portName": "Alexandria", "proformaDa": 28000, "finalDa": 31200, "proformaLashing": 5500, "finalLashing": 5800, "pilotage": 1800, "towage": 1200, "agencyFee": 1200, "otherCosts": 500 }
+    ],
+    "canalCosts": [
+      { "id": "cc001", "canalType": "dardanelles", "proformaCost": 18000, "finalCost": 18500 },
+      { "id": "cc002", "canalType": "bosphorus", "proformaCost": 22000, "finalCost": 23800 }
+    ],
+    "deviationThreshold": 5,
+    "remarks": "Smooth voyage. Minor delay at Rotterdam due to weather. All costs within acceptable range.",
+    "documents": [],
+    "createdAt": "2025-01-03T08:00:00.000Z",
+    "updatedAt": "2025-02-01T10:00:00.000Z"
+  },
+  {
+    "id": "v002",
+    "voyageNumber": "VOY-2025-002",
+    "vesselName": "MV Black Sea Trader",
+    "vesselType": "Bulk Carrier",
+    "vesselSpeed": 12.0,
+    "laydaysStart": "2025-02-01",
+    "cancellingDate": "2025-02-08",
+    "status": "closed",
+    "cargoes": [
+      {
+        "id": "c002",
+        "cargoType": "steel",
+        "quantity": 18500,
+        "loadingPorts": ["Novorossiysk"],
+        "dischargingPorts": ["Hamburg"],
+        "chartererName": "Thyssen Steel GmbH",
+        "chartererAddress": "Thyssenkrupp Allee 1, Essen, Germany",
+        "freightRate": 52.0,
+        "freightType": "per_mt",
+        "brokeragePercent": 3.75
+      }
+    ],
+    "portRotation": [
+      { "id": "pc005", "portId": "RUNOVOR", "portName": "Novorossiysk", "role": "load", "eta": "2025-02-02", "etd": "2025-02-05", "isBosphorus": false, "isDardanelles": false, "isSuez": false },
+      { "id": "pc006", "portId": "TRIST", "portName": "Istanbul", "role": "transit", "eta": "2025-02-07", "etd": "2025-02-07", "isBosphorus": true, "isDardanelles": false, "isSuez": false },
+      { "id": "pc007", "portId": "TRCSK", "portName": "Canakkale (Dardanelles)", "role": "transit", "eta": "2025-02-08", "etd": "2025-02-08", "isBosphorus": false, "isDardanelles": true, "isSuez": false },
+      { "id": "pc008", "portId": "DEHAM", "portName": "Hamburg", "role": "discharge", "eta": "2025-02-15", "etd": "2025-02-18", "isBosphorus": false, "isDardanelles": false, "isSuez": false }
+    ],
+    "costs": [
+      { "id": "co003", "portCallId": "pc005", "portName": "Novorossiysk", "proformaDa": 19500, "finalDa": 21800, "proformaLashing": 12000, "finalLashing": 13500, "pilotage": 2200, "towage": 1800, "agencyFee": 1500, "otherCosts": 0 },
+      { "id": "co004", "portCallId": "pc008", "portName": "Hamburg", "proformaDa": 38000, "finalDa": 39500, "proformaLashing": 0, "finalLashing": 0, "pilotage": 4500, "towage": 3200, "agencyFee": 2200, "otherCosts": 800 }
+    ],
+    "canalCosts": [
+      { "id": "cc003", "canalType": "bosphorus", "proformaCost": 22000, "finalCost": 24500 },
+      { "id": "cc004", "canalType": "dardanelles", "proformaCost": 18000, "finalCost": 19200 }
+    ],
+    "deviationThreshold": 5,
+    "remarks": "Bosphorus transit delayed 18 hours due to traffic congestion.",
+    "documents": [],
+    "createdAt": "2025-01-28T09:00:00.000Z",
+    "updatedAt": "2025-03-01T10:00:00.000Z"
+  },
+  {
+    "id": "v003",
+    "voyageNumber": "VOY-2025-003",
+    "vesselName": "MV Pacific Glory",
+    "vesselType": "Bulk Carrier",
+    "vesselSpeed": 14.0,
+    "laydaysStart": "2025-03-10",
+    "cancellingDate": "2025-03-17",
+    "status": "completed",
+    "cargoes": [
+      {
+        "id": "c003",
+        "cargoType": "coal",
+        "quantity": 75000,
+        "loadingPorts": ["Brisbane"],
+        "dischargingPorts": ["Shanghai"],
+        "chartererName": "Glencore Asia",
+        "chartererAddress": "50 Raffles Place, Singapore",
+        "freightRate": 18.75,
+        "freightType": "per_mt",
+        "brokeragePercent": 2.0
+      }
+    ],
+    "portRotation": [
+      { "id": "pc009", "portId": "AUCNS", "portName": "Brisbane", "role": "load", "eta": "2025-03-11", "etd": "2025-03-15", "isBosphorus": false, "isDardanelles": false, "isSuez": false },
+      { "id": "pc010", "portId": "CNSHA", "portName": "Shanghai", "role": "discharge", "eta": "2025-03-29", "etd": "2025-04-02", "isBosphorus": false, "isDardanelles": false, "isSuez": false }
+    ],
+    "costs": [
+      { "id": "co005", "portCallId": "pc009", "portName": "Brisbane", "proformaDa": 35000, "finalDa": 36800, "proformaLashing": 4200, "finalLashing": 4200, "pilotage": 5200, "towage": 4100, "agencyFee": 2800, "otherCosts": 0 },
+      { "id": "co006", "portCallId": "pc010", "portName": "Shanghai", "proformaDa": 42000, "finalDa": 58500, "proformaLashing": 0, "finalLashing": 0, "pilotage": 8500, "towage": 6200, "agencyFee": 3500, "otherCosts": 2200 }
+    ],
+    "canalCosts": [],
+    "deviationThreshold": 5,
+    "remarks": "Shanghai DA significantly over proforma due to unexpected port authority charges and extended port stay.",
+    "documents": [],
+    "createdAt": "2025-03-08T07:00:00.000Z",
+    "updatedAt": "2025-04-05T10:00:00.000Z"
+  },
+  {
+    "id": "v004",
+    "voyageNumber": "VOY-2025-004",
+    "vesselName": "MV Suez Express",
+    "vesselType": "Bulk Carrier",
+    "vesselSpeed": 13.0,
+    "laydaysStart": "2025-04-01",
+    "cancellingDate": "2025-04-08",
+    "status": "completed",
+    "cargoes": [
+      {
+        "id": "c004",
+        "cargoType": "fertilizer",
+        "quantity": 38000,
+        "loadingPorts": ["Jeddah"],
+        "dischargingPorts": ["Antwerp"],
+        "chartererName": "Yara International",
+        "chartererAddress": "Drammensveien 131, Oslo, Norway",
+        "freightRate": 45.0,
+        "freightType": "per_mt",
+        "brokeragePercent": 2.5
+      }
+    ],
+    "portRotation": [
+      { "id": "pc011", "portId": "SAJED", "portName": "Jeddah", "role": "load", "eta": "2025-04-03", "etd": "2025-04-07", "isBosphorus": false, "isDardanelles": false, "isSuez": false },
+      { "id": "pc012", "portId": "EGSUZ", "portName": "Suez (Suez South)", "role": "transit", "eta": "2025-04-11", "etd": "2025-04-11", "isBosphorus": false, "isDardanelles": false, "isSuez": true },
+      { "id": "pc013", "portId": "EGPSD", "portName": "Port Said (Suez North)", "role": "transit", "eta": "2025-04-12", "etd": "2025-04-12", "isBosphorus": false, "isDardanelles": false, "isSuez": true },
+      { "id": "pc014", "portId": "BEANR", "portName": "Antwerp", "role": "discharge", "eta": "2025-04-20", "etd": "2025-04-24", "isBosphorus": false, "isDardanelles": false, "isSuez": false }
+    ],
+    "costs": [
+      { "id": "co007", "portCallId": "pc011", "portName": "Jeddah", "proformaDa": 31000, "finalDa": 32500, "proformaLashing": 9500, "finalLashing": 10200, "pilotage": 2800, "towage": 1500, "agencyFee": 1800, "otherCosts": 0 },
+      { "id": "co008", "portCallId": "pc014", "portName": "Antwerp", "proformaDa": 44000, "finalDa": 45800, "proformaLashing": 0, "finalLashing": 0, "pilotage": 5200, "towage": 3800, "agencyFee": 2500, "otherCosts": 1200 }
+    ],
+    "canalCosts": [
+      { "id": "cc005", "canalType": "suez", "proformaCost": 185000, "finalCost": 188500 }
+    ],
+    "deviationThreshold": 5,
+    "remarks": "Suez Canal transit smooth. All costs within budget.",
+    "documents": [],
+    "createdAt": "2025-03-28T08:00:00.000Z",
+    "updatedAt": "2025-05-01T10:00:00.000Z"
+  },
+  {
+    "id": "v005",
+    "voyageNumber": "VOY-2025-005",
+    "vesselName": "MV Nordic Venture",
+    "vesselType": "General Cargo",
+    "vesselSpeed": 11.5,
+    "laydaysStart": "2025-05-12",
+    "cancellingDate": "2025-05-19",
+    "status": "active",
+    "cargoes": [
+      {
+        "id": "c005",
+        "cargoType": "timber",
+        "quantity": 8500,
+        "loadingPorts": ["Gothenburg"],
+        "dischargingPorts": ["Barcelona"],
+        "chartererName": "IKEA Supply AG",
+        "chartererAddress": "Orminge, Stockholm, Sweden",
+        "freightRate": 68.0,
+        "freightType": "per_mt",
+        "brokeragePercent": 3.0
+      }
+    ],
+    "portRotation": [
+      { "id": "pc015", "portId": "SEGOT", "portName": "Gothenburg", "role": "load", "eta": "2025-05-13", "etd": "2025-05-16", "isBosphorus": false, "isDardanelles": false, "isSuez": false },
+      { "id": "pc016", "portId": "ESBCN", "portName": "Barcelona", "role": "discharge", "eta": "2025-05-22", "etd": "2025-05-25", "isBosphorus": false, "isDardanelles": false, "isSuez": false }
+    ],
+    "costs": [
+      { "id": "co009", "portCallId": "pc015", "portName": "Gothenburg", "proformaDa": 14500, "finalDa": 15200, "proformaLashing": 6800, "finalLashing": 7100, "pilotage": 1800, "towage": 1200, "agencyFee": 1100, "otherCosts": 0 },
+      { "id": "co010", "portCallId": "pc016", "portName": "Barcelona", "proformaDa": 12000, "finalDa": 0, "proformaLashing": 4500, "finalLashing": 0, "pilotage": 2200, "towage": 1500, "agencyFee": 1000, "otherCosts": 0 }
+    ],
+    "canalCosts": [],
+    "deviationThreshold": 5,
+    "remarks": "Voyage in progress. Barcelona costs to be finalised on arrival.",
+    "documents": [],
+    "createdAt": "2025-05-10T06:00:00.000Z",
+    "updatedAt": "2025-05-10T06:00:00.000Z"
+  },
+  {
+    "id": "v006",
+    "voyageNumber": "VOY-2025-006",
+    "vesselName": "MV Eastern Promise",
+    "vesselType": "Bulk Carrier",
+    "vesselSpeed": 13.5,
+    "laydaysStart": "2025-06-01",
+    "cancellingDate": "2025-06-08",
+    "status": "active",
+    "cargoes": [
+      {
+        "id": "c006",
+        "cargoType": "grain",
+        "quantity": 61000,
+        "loadingPorts": ["Santos"],
+        "dischargingPorts": ["Piraeus"],
+        "chartererName": "Louis Dreyfus",
+        "chartererAddress": "Polaris House, 3 Hanover Square, London, UK",
+        "freightRate": 36.0,
+        "freightType": "per_mt",
+        "brokeragePercent": 2.5
+      },
+      {
+        "id": "c006b",
+        "cargoType": "bulk",
+        "quantity": 9000,
+        "loadingPorts": ["Buenos Aires"],
+        "dischargingPorts": ["Piraeus"],
+        "chartererName": "ADM Export",
+        "chartererAddress": "77 W Wacker Dr, Chicago, USA",
+        "freightRate": 42.0,
+        "freightType": "per_mt",
+        "brokeragePercent": 2.5
+      }
+    ],
+    "portRotation": [
+      { "id": "pc017", "portId": "ARBUE", "portName": "Buenos Aires", "role": "load", "eta": "2025-06-03", "etd": "2025-06-06", "isBosphorus": false, "isDardanelles": false, "isSuez": false },
+      { "id": "pc018", "portId": "BRSSZ", "portName": "Santos", "role": "load", "eta": "2025-06-09", "etd": "2025-06-13", "isBosphorus": false, "isDardanelles": false, "isSuez": false },
+      { "id": "pc019", "portId": "EGPSD", "portName": "Port Said (Suez North)", "role": "transit", "eta": "2025-07-01", "etd": "2025-07-01", "isBosphorus": false, "isDardanelles": false, "isSuez": true },
+      { "id": "pc020", "portId": "GRATH", "portName": "Piraeus", "role": "discharge", "eta": "2025-07-06", "etd": "2025-07-10", "isBosphorus": false, "isDardanelles": false, "isSuez": false }
+    ],
+    "costs": [
+      { "id": "co011", "portCallId": "pc017", "portName": "Buenos Aires", "proformaDa": 22000, "finalDa": 23500, "proformaLashing": 5000, "finalLashing": 5400, "pilotage": 3500, "towage": 2800, "agencyFee": 2000, "otherCosts": 0 },
+      { "id": "co012", "portCallId": "pc018", "portName": "Santos", "proformaDa": 28000, "finalDa": 29800, "proformaLashing": 6500, "finalLashing": 7000, "pilotage": 4200, "towage": 3100, "agencyFee": 2200, "otherCosts": 500 },
+      { "id": "co013", "portCallId": "pc020", "portName": "Piraeus", "proformaDa": 18000, "finalDa": 0, "proformaLashing": 0, "finalLashing": 0, "pilotage": 2200, "towage": 1500, "agencyFee": 1500, "otherCosts": 0 }
+    ],
+    "canalCosts": [
+      { "id": "cc006", "canalType": "suez", "proformaCost": 192000, "finalCost": 195000 }
+    ],
+    "deviationThreshold": 5,
+    "remarks": "Two-port loading. Piraeus costs pending.",
+    "documents": [],
+    "createdAt": "2025-05-28T08:00:00.000Z",
+    "updatedAt": "2025-05-28T08:00:00.000Z"
+  },
+  {
+    "id": "v007",
+    "voyageNumber": "VOY-2025-007",
+    "vesselName": "MV Caspian Wind",
+    "vesselType": "Tanker",
+    "vesselSpeed": 14.5,
+    "laydaysStart": "2025-07-10",
+    "cancellingDate": "2025-07-17",
+    "status": "planned",
+    "cargoes": [
+      {
+        "id": "c007",
+        "cargoType": "other",
+        "quantity": 0,
+        "loadingPorts": ["Bandar Abbas"],
+        "dischargingPorts": ["Rotterdam"],
+        "chartererName": "Vitol Group",
+        "chartererAddress": "Rietlandpark 1, Amsterdam, Netherlands",
+        "freightRate": 2850000,
+        "freightType": "lumpsum",
+        "brokeragePercent": 1.25
+      }
+    ],
+    "portRotation": [
+      { "id": "pc021", "portId": "IRILM", "portName": "Bandar Abbas", "role": "load", "eta": "2025-07-12", "etd": "2025-07-15", "isBosphorus": false, "isDardanelles": false, "isSuez": false },
+      { "id": "pc022", "portId": "EGSUZ", "portName": "Suez (Suez South)", "role": "transit", "eta": "2025-07-22", "etd": "2025-07-22", "isBosphorus": false, "isDardanelles": false, "isSuez": true },
+      { "id": "pc023", "portId": "NLRTM", "portName": "Rotterdam", "role": "discharge", "eta": "2025-07-30", "etd": "2025-08-02", "isBosphorus": false, "isDardanelles": false, "isSuez": false }
+    ],
+    "costs": [
+      { "id": "co014", "portCallId": "pc021", "portName": "Bandar Abbas", "proformaDa": 35000, "finalDa": 0, "proformaLashing": 0, "finalLashing": 0, "pilotage": 3500, "towage": 2200, "agencyFee": 2800, "otherCosts": 0 },
+      { "id": "co015", "portCallId": "pc023", "portName": "Rotterdam", "proformaDa": 48000, "finalDa": 0, "proformaLashing": 0, "finalLashing": 0, "pilotage": 4200, "towage": 3100, "agencyFee": 2200, "otherCosts": 0 }
+    ],
+    "canalCosts": [
+      { "id": "cc007", "canalType": "suez", "proformaCost": 245000, "finalCost": 0 }
+    ],
+    "deviationThreshold": 5,
+    "remarks": "Planned tanker voyage. Proforma costs only.",
+    "documents": [],
+    "createdAt": "2025-07-01T08:00:00.000Z",
+    "updatedAt": "2025-07-01T08:00:00.000Z"
+  },
+  {
+    "id": "v008",
+    "voyageNumber": "VOY-2025-008",
+    "vesselName": "MV Iron Dragon",
+    "vesselType": "Bulk Carrier",
+    "vesselSpeed": 12.5,
+    "laydaysStart": "2025-08-05",
+    "cancellingDate": "2025-08-12",
+    "status": "planned",
+    "cargoes": [
+      {
+        "id": "c008",
+        "cargoType": "coal",
+        "quantity": 68000,
+        "loadingPorts": ["Newcastle"],
+        "dischargingPorts": ["Ningbo"],
+        "chartererName": "China Coal Energy",
+        "chartererAddress": "Xibianmen Nanjie, Beijing, China",
+        "freightRate": 16.5,
+        "freightType": "per_mt",
+        "brokeragePercent": 2.0
+      }
+    ],
+    "portRotation": [
+      { "id": "pc024", "portId": "AUCNS", "portName": "Brisbane", "role": "load", "eta": "2025-08-07", "etd": "2025-08-12", "isBosphorus": false, "isDardanelles": false, "isSuez": false },
+      { "id": "pc025", "portId": "CNNGB", "portName": "Ningbo", "role": "discharge", "eta": "2025-08-26", "etd": "2025-08-30", "isBosphorus": false, "isDardanelles": false, "isSuez": false }
+    ],
+    "costs": [
+      { "id": "co016", "portCallId": "pc024", "portName": "Brisbane", "proformaDa": 38000, "finalDa": 0, "proformaLashing": 3500, "finalLashing": 0, "pilotage": 5200, "towage": 4100, "agencyFee": 2800, "otherCosts": 0 },
+      { "id": "co017", "portCallId": "pc025", "portName": "Ningbo", "proformaDa": 45000, "finalDa": 0, "proformaLashing": 0, "finalLashing": 0, "pilotage": 8200, "towage": 6000, "agencyFee": 3200, "otherCosts": 0 }
+    ],
+    "canalCosts": [],
+    "deviationThreshold": 5,
+    "remarks": "Planned voyage. Awaiting CP confirmation.",
+    "documents": [],
+    "createdAt": "2025-07-25T08:00:00.000Z",
+    "updatedAt": "2025-07-25T08:00:00.000Z"
+  }
+]
