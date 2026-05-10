@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Ship, LayoutDashboard, Plus, ChevronLeft, ChevronRight,
-  FileText, LogOut, BookTemplate, Search, X, TrendingUp,
+  LogOut, BookTemplate, Search, X, TrendingUp,
 } from 'lucide-react';
-import { cn, statusColor, formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { StatusBadge } from './StatusBadge';
 import type { Voyage, VoyageStatus } from '@/types';
 import { calculatePnL } from '@/lib/pnl';

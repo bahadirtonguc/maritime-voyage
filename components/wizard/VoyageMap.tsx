@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import type { Map, Marker, Polyline } from 'leaflet';
 import type { PortCall } from '@/types';
 import portsData from '@/data/ports.json';
 import type { Port } from '@/types';
@@ -23,9 +24,9 @@ const ROLE_COLORS = {
 
 export function VoyageMap({ portRotation }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
-  const polylinesRef = useRef<any[]>([]);
+  const mapInstanceRef = useRef<Map | null>(null);
+  const markersRef = useRef<Marker[]>([]);
+  const polylinesRef = useRef<Polyline[]>([]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

@@ -1,4 +1,5 @@
-import { SignJWT, jwtVerify } from 'jose';
+import { SignJWT } from 'jose/jwt/sign';
+import { jwtVerify } from 'jose/jwt/verify';
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'maritime-voyage-secret-key-2024');
 const COOKIE_NAME = 'maritime_session';

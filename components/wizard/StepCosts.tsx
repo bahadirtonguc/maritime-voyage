@@ -2,7 +2,7 @@
 
 import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 import type { CostEntry, CanalCost, Voyage } from '@/types';
-import { generateId, formatCurrency } from '@/lib/utils';
+import { generateId } from '@/lib/utils';
 
 interface Props {
   data: Partial<Voyage>;

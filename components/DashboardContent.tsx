@@ -8,7 +8,7 @@ import { NetFreightTrendChart } from './charts/NetFreightTrendChart';
 import { TransitFlagsWidget } from './TransitFlagsWidget';
 import { RecentVoyagesList } from './RecentVoyagesList';
 import { calculatePnL } from '@/lib/pnl';
-import { formatCurrency, formatPercent } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import { DollarSign, Ship, AlertTriangle, TrendingUp } from 'lucide-react';
 
 export function DashboardContent() {

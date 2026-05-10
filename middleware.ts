@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken, COOKIE_NAME } from '@/lib/auth';
 
+const COOKIE_NAME = 'maritime_session';
 const PUBLIC_PATHS = ['/login', '/api/auth/login'];
 
-export async function middleware(req: NextRequest) {
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
@@ -17,13 +17,6 @@ export async function middleware(req: NextRequest) {
   const token = req.cookies.get(COOKIE_NAME)?.value;
   if (!token) {
     return NextResponse.redirect(new URL('/login', req.url));
-  }
-
-  const payload = await verifyToken(token);
-  if (!payload) {
-    const res = NextResponse.redirect(new URL('/login', req.url));
-    res.cookies.delete(COOKIE_NAME);
-    return res;
   }
 
   return NextResponse.next();

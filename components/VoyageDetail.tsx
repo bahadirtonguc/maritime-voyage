@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Edit, Trash2, FileText, Ship, Download, BookTemplate,
+  Edit, Trash2, Ship, Download, BookTemplate,
   AlertTriangle, FileSpreadsheet, Loader2,
 } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
@@ -15,7 +15,7 @@ import { RemarksSection } from './RemarksSection';
 import { useToast } from './ToastProvider';
 import { useVoyages } from '@/hooks/useVoyages';
 import { useTemplates } from '@/hooks/useTemplates';
-import { calculatePnL, buildVarianceItems } from '@/lib/pnl';
+import { buildVarianceItems } from '@/lib/pnl';
 import { formatCurrency, generateId, cn } from '@/lib/utils';
 import type { Voyage } from '@/types';
 import dynamic from 'next/dynamic';
@@ -40,7 +40,6 @@ export function VoyageDetail({ voyage }: Props) {
   const { toast } = useToast();
   const router = useRouter();
 
-  const pnl = calculatePnL(voyage);
   const varianceItems = buildVarianceItems(voyage);
 
   async function handleDelete() {
@@ -234,7 +233,7 @@ export function VoyageDetail({ voyage }: Props) {
                 <p className="text-sm text-muted-foreground">No cargoes defined</p>
               ) : (
                 <div className="space-y-2">
-                  {voyage.cargoes.map((cargo, i) => {
+                  {voyage.cargoes.map((cargo) => {
                     const grossFreight = cargo.freightType === 'lumpsum'
                       ? cargo.freightRate
                       : cargo.freightRate * cargo.quantity;
