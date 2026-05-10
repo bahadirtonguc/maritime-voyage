@@ -56,10 +56,12 @@ export function Sidebar({ voyages, loading }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border">
         {!collapsed && (
-          <div className="flex items-center gap-2">
-            <Ship className="h-5 w-5 text-primary shrink-0" />
-            <span className="font-bold text-sm text-foreground">Voyage Manager</span>
-          </div>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src="https://core-shipping.com/uploads/logo.png"
+            alt="Core Shipping"
+            style={{ height: 36, width: 'auto', maxWidth: 140, filter: 'brightness(0) invert(1)' }}
+          />
         )}
         {collapsed && <Ship className="h-5 w-5 text-primary mx-auto" />}
         <button
@@ -134,8 +136,13 @@ export function Sidebar({ voyages, loading }: Props) {
         </div>
       )}
 
-      {/* Logout */}
-      <div className="p-2 border-t border-border">
+      {/* Footer + Logout */}
+      <div className="p-2 border-t border-border space-y-1">
+        {!collapsed && (
+          <p className="px-3 py-1 text-center text-[10px] text-muted-foreground/50 select-none">
+            Developed by Bero · 2026
+          </p>
+        )}
         <button
           onClick={handleLogout}
           className={cn(
