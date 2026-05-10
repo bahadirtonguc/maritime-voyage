@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, Trash2, GripVertical, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Trash2, GripVertical, AlertTriangle, RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import type { PortCall, PortRole, Voyage } from '@/types';
 import type { Port } from '@/types';
 import { generateId } from '@/lib/utils';
 import { PortAutocomplete } from './PortAutocomplete';
+import portsData from '@/data/ports.json';
 
 const VoyageMap = dynamic(() => import('./VoyageMap').then((m) => m.VoyageMap), {
   ssr: false,
@@ -35,9 +36,80 @@ function emptyPortCall(): PortCall {
   };
 }
 
+const PORTS = portsData as Port[];
+
+function findPort(name: string): Port | undefined {
+  const lower = name.toLowerCase().trim();
+  return PORTS.find((p) => p.name.toLowerCase() === lower || p.id.toLowerCase() === lower);
+}
+
+function buildRotationFromCargoes(data: Partial<Voyage>): PortCall[] {
+  const seen = new Set<string>();
+  const result: PortCall[] = [];
+
+  for (const cargo of data.cargoes ?? []) {
+    const loadingNames = cargo.loadingPortDAs?.map((p) => p.portName).filter(Boolean)
+      ?? cargo.loadingPorts ?? [];
+    const dischargeNames = cargo.dischargingPortDAs?.map((p) => p.portName).filter(Boolean)
+      ?? cargo.dischargingPorts ?? [];
+
+    for (const name of loadingNames) {
+      if (!name || seen.has(name)) continue;
+      seen.add(name);
+      const port = findPort(name);
+      result.push({
+        id: generateId(),
+        portId: port?.id ?? '',
+        portName: port?.name ?? name,
+        role: 'load',
+        eta: '',
+        etd: '',
+        isBosphorus: port?.isBosphorus,
+        isDardanelles: port?.isDardanelles,
+        isSuez: port?.isSuez,
+      });
+    }
+
+    for (const name of dischargeNames) {
+      if (!name || seen.has(name)) continue;
+      seen.add(name);
+      const port = findPort(name);
+      result.push({
+        id: generateId(),
+        portId: port?.id ?? '',
+        portName: port?.name ?? name,
+        role: 'discharge',
+        eta: '',
+        etd: '',
+        isBosphorus: port?.isBosphorus,
+        isDardanelles: port?.isDardanelles,
+        isSuez: port?.isSuez,
+      });
+    }
+  }
+
+  return result;
+}
+
 export function StepPortRotation({ data, onChange }: Props) {
   const portRotation: PortCall[] = data.portRotation ?? [];
   const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const synced = useRef(false);
+
+  useEffect(() => {
+    if (synced.current) return;
+    synced.current = true;
+    if (portRotation.length === 0) {
+      const derived = buildRotationFromCargoes(data);
+      if (derived.length > 0) onChange({ ...data, portRotation: derived });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function syncFromCargoes() {
+    const derived = buildRotationFromCargoes(data);
+    if (derived.length > 0) onChange({ ...data, portRotation: derived });
+  }
 
   function addPort() {
     onChange({ ...data, portRotation: [...portRotation, emptyPortCall()] });
@@ -87,16 +159,27 @@ export function StepPortRotation({ data, onChange }: Props) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-semibold text-foreground">Port Rotation</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Drag to reorder ports. Strait transits are auto-detected.</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Yüklerden otomatik oluşturulur. Drag ile sıralayabilirsin.</p>
         </div>
-        <button
-          type="button"
-          onClick={addPort}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-lg text-xs font-medium transition-colors"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Add Port
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={syncFromCargoes}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-background hover:bg-border/50 border border-border text-muted-foreground hover:text-foreground rounded-lg text-xs font-medium transition-colors"
+            title="Yüklerden yeniden oluştur"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Sync
+          </button>
+          <button
+            type="button"
+            onClick={addPort}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-lg text-xs font-medium transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add Port
+          </button>
+        </div>
       </div>
 
       {/* Transit alerts */}
