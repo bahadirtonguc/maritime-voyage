@@ -124,6 +124,6 @@ export function VoyageMap({ portRotation }: Props) {
   }, [portRotation]);
 
   return (
-    <div ref={mapRef} className="w-full h-full rounded-xl overflow-hidden" style={{ minHeight: 320 }} />
+    <div ref={mapRef} className="w-full h-full rounded-xl overflow-hidden" />
   );
 }

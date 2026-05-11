@@ -220,7 +220,7 @@ export function VoyageDetail({ voyage }: Props) {
                 </div>
               )}
               {voyage.portRotation.length > 0 && (
-                <div className="mt-4 h-48">
+                <div className="mt-4" style={{ height: 280 }}>
                   <VoyageMap portRotation={voyage.portRotation} />
                 </div>
               )}
