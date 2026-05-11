@@ -46,22 +46,19 @@ export async function exportVoyageExcel(voyage: Voyage): Promise<void> {
   XLSX.utils.book_append_sheet(wb, wsVar, 'Variance Analysis');
 
   // ── Sheet 3: Port Costs ──────────────────────────────────────────────────
-  const costsHeader = ['Port', 'Role', 'Proforma D/A', 'Final D/A', 'Pro. Lashing', 'Final Lashing', 'Pilotage', 'Towage', 'Agency Fee', 'Other', 'Total Proforma', 'Total Final'];
+  const costsHeader = ['Port', 'Role', 'Pro. D/A', 'Final D/A', 'Pro. Pilotage', 'Final Pilotage', 'Pro. Towage', 'Final Towage', 'Pro. Agency', 'Final Agency', 'Pro. Other', 'Final Other', 'Total Proforma', 'Total Final'];
   const costsRows = voyage.costs.map((c) => {
     const portCall = voyage.portRotation.find((p) => p.id === c.portCallId);
+    const totalPro = c.proformaDa + c.proformaPilotage + c.proformaTowage + c.proformaAgencyFee + c.proformaOther;
+    const totalFin = c.finalDa + c.finalPilotage + c.finalTowage + c.finalAgencyFee + c.finalOther;
     return [
-      c.portName,
-      portCall?.role ?? '',
-      c.proformaDa,
-      c.finalDa,
-      c.proformaLashing,
-      c.finalLashing,
-      c.pilotage,
-      c.towage,
-      c.agencyFee,
-      c.otherCosts,
-      c.proformaDa + c.proformaLashing + c.pilotage + c.towage + c.agencyFee + c.otherCosts,
-      c.finalDa + c.finalLashing + c.pilotage + c.towage + c.agencyFee + c.otherCosts,
+      c.portName, portCall?.role ?? '',
+      c.proformaDa, c.finalDa,
+      c.proformaPilotage, c.finalPilotage,
+      c.proformaTowage, c.finalTowage,
+      c.proformaAgencyFee, c.finalAgencyFee,
+      c.proformaOther, c.finalOther,
+      totalPro, totalFin,
     ];
   });
   const canalRows = voyage.canalCosts.map((c) => [

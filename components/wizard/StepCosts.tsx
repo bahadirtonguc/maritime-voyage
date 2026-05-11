@@ -1,43 +1,40 @@
 'use client';
 
-import { Plus, Trash2, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import type { CostEntry, CanalCost, Voyage } from '@/types';
 import { generateId } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 
 interface Props {
   data: Partial<Voyage>;
   onChange: (data: Partial<Voyage>) => void;
 }
 
-const inputClass = "w-full px-2.5 py-1.5 bg-background border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 transition-colors";
+const smCls = "w-full px-2 py-1 bg-background border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 transition-colors";
 
-function NumInput({ value, onChange, placeholder = '0' }: { value: number; onChange: (v: number) => void; placeholder?: string }) {
+function Num({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
-    <input
-      type="number"
-      value={value || ''}
-      onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-      placeholder={placeholder}
-      min={0}
-      step={100}
-      className={inputClass}
-    />
+    <input type="number" value={value || ''} onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+      placeholder="0" min={0} className={smCls} />
   );
 }
 
-function emptyCostEntry(portName: string, portCallId: string): CostEntry {
+function devColor(pro: number, fin: number, threshold: number) {
+  if (!pro || !fin) return 'text-muted-foreground';
+  const d = Math.abs(((fin - pro) / pro) * 100);
+  if (d > threshold * 2) return 'text-red-400';
+  if (d > threshold) return 'text-amber-400';
+  return 'text-green-400';
+}
+
+function emptyCostEntry(portCallId: string, portName: string): CostEntry {
   return {
-    id: generateId(),
-    portCallId,
-    portName,
-    proformaDa: 0,
-    finalDa: 0,
-    proformaLashing: 0,
-    finalLashing: 0,
-    pilotage: 0,
-    towage: 0,
-    agencyFee: 0,
-    otherCosts: 0,
+    id: generateId(), portCallId, portName,
+    proformaDa: 0, finalDa: 0,
+    proformaPilotage: 0, finalPilotage: 0,
+    proformaTowage: 0, finalTowage: 0,
+    proformaAgencyFee: 0, finalAgencyFee: 0,
+    proformaOther: 0, finalOther: 0,
   };
 }
 
@@ -45,206 +42,216 @@ function emptyCanalCost(type: 'suez' | 'bosphorus' | 'dardanelles'): CanalCost {
   return { id: generateId(), canalType: type, proformaCost: 0, finalCost: 0 };
 }
 
-function deviationColor(proforma: number, final: number, threshold: number) {
-  if (proforma === 0) return '';
-  const dev = Math.abs(((final - proforma) / proforma) * 100);
-  if (dev > threshold * 2) return 'text-red-400';
-  if (dev > threshold) return 'text-amber-400';
-  return 'text-green-400';
-}
+const COST_ROWS: { key: keyof CostEntry; proKey: keyof CostEntry; finKey: keyof CostEntry; label: string }[] = [
+  { key: 'proformaDa', proKey: 'proformaDa', finKey: 'finalDa', label: 'D/A' },
+  { key: 'proformaPilotage', proKey: 'proformaPilotage', finKey: 'finalPilotage', label: 'Pilotage' },
+  { key: 'proformaTowage', proKey: 'proformaTowage', finKey: 'finalTowage', label: 'Towage' },
+  { key: 'proformaAgencyFee', proKey: 'proformaAgencyFee', finKey: 'finalAgencyFee', label: 'Agency Fee' },
+  { key: 'proformaOther', proKey: 'proformaOther', finKey: 'finalOther', label: 'Diğer' },
+];
 
 export function StepCosts({ data, onChange }: Props) {
   const costs: CostEntry[] = data.costs ?? [];
   const canalCosts: CanalCost[] = data.canalCosts ?? [];
   const threshold = data.deviationThreshold ?? 5;
   const portRotation = data.portRotation ?? [];
+  const cargoes = data.cargoes ?? [];
 
   const hasBosphorus = portRotation.some((p) => p.isBosphorus);
   const hasSuez = portRotation.some((p) => p.isSuez);
   const hasDardanelles = portRotation.some((p) => p.isDardanelles);
 
-  function addCostEntry() {
-    const pc = portRotation[0];
-    onChange({ ...data, costs: [...costs, emptyCostEntry(pc?.portName ?? 'Port', pc?.id ?? '')] });
+  // Auto-ensure a CostEntry per portCall
+  function ensureCostForPort(portCallId: string, portName: string) {
+    if (costs.find((c) => c.portCallId === portCallId)) return;
+    onChange({ ...data, costs: [...costs, emptyCostEntry(portCallId, portName)] });
   }
 
-  function addCostForPort(portCallId: string, portName: string) {
-    onChange({ ...data, costs: [...costs, emptyCostEntry(portName, portCallId)] });
-  }
+  // Ensure all ports have a cost entry on render
+  portRotation.forEach((pc) => {
+    if (!costs.find((c) => c.portCallId === pc.id)) {
+      // Will trigger re-render; do in useEffect equivalent via direct push
+    }
+  });
 
   function updateCost(id: string, updates: Partial<CostEntry>) {
-    onChange({ ...data, costs: costs.map((c) => (c.id === id ? { ...c, ...updates } : c)) });
-  }
-
-  function removeCost(id: string) {
-    onChange({ ...data, costs: costs.filter((c) => c.id !== id) });
+    onChange({ ...data, costs: costs.map((c) => c.id === id ? { ...c, ...updates } : c) });
   }
 
   function toggleCanalCost(type: 'suez' | 'bosphorus' | 'dardanelles') {
     const existing = canalCosts.find((c) => c.canalType === type);
-    if (existing) {
-      onChange({ ...data, canalCosts: canalCosts.filter((c) => c.canalType !== type) });
-    } else {
-      onChange({ ...data, canalCosts: [...canalCosts, emptyCanalCost(type)] });
-    }
+    if (existing) onChange({ ...data, canalCosts: canalCosts.filter((c) => c.canalType !== type) });
+    else onChange({ ...data, canalCosts: [...canalCosts, emptyCanalCost(type)] });
   }
 
   function updateCanalCost(id: string, updates: Partial<CanalCost>) {
-    onChange({ ...data, canalCosts: canalCosts.map((c) => (c.id === id ? { ...c, ...updates } : c)) });
+    onChange({ ...data, canalCosts: canalCosts.map((c) => c.id === id ? { ...c, ...updates } : c) });
   }
 
-  // Group costs by port
+  // Group costs by portCall
   const portGroups = portRotation.map((pc) => ({
     portCall: pc,
-    costs: costs.filter((c) => c.portCallId === pc.id),
+    cost: costs.find((c) => c.portCallId === pc.id) ?? null,
   }));
 
-  const unassignedCosts = costs.filter((c) => !portRotation.find((pc) => pc.id === c.portCallId));
+  // Total proforma and final
+  const totalPro = costs.reduce((s, c) =>
+    s + c.proformaDa + c.proformaPilotage + c.proformaTowage + c.proformaAgencyFee + c.proformaOther, 0)
+    + canalCosts.reduce((s, c) => s + c.proformaCost, 0)
+    + cargoes.reduce((s, c) => s + (c.lashingProforma ?? 0) + (c.otherCostsProforma ?? 0), 0);
+
+  const totalFin = costs.reduce((s, c) =>
+    s + c.finalDa + c.finalPilotage + c.finalTowage + c.finalAgencyFee + c.finalOther, 0)
+    + canalCosts.reduce((s, c) => s + c.finalCost, 0)
+    + cargoes.reduce((s, c) => s + (c.lashingFinal ?? 0) + (c.otherCostsFinal ?? 0), 0);
 
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-base font-semibold text-foreground">Port Costs</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Enter proforma and final costs per port. Deviation threshold: <strong>{threshold}%</strong>
-        </p>
+        <h2 className="text-base font-semibold text-foreground">Costs & Disbursements</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">Her port için beklenen ve gerçekleşen masraflar</p>
       </div>
 
-      {/* Per-port cost sections */}
-      {portGroups.map(({ portCall, costs: portCosts }) => (
-        <div key={portCall.id} className="bg-background/40 border border-border rounded-xl p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-sm font-semibold text-foreground">{portCall.portName || '(Unnamed Port)'}</span>
-              <span className="ml-2 text-xs capitalize px-1.5 py-0.5 rounded bg-border/50 text-muted-foreground">{portCall.role}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => addCostForPort(portCall.id, portCall.portName)}
-              className="flex items-center gap-1 px-2 py-1 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-lg text-xs transition-colors"
-            >
-              <Plus className="h-3 w-3" /> Add Cost
-            </button>
-          </div>
+      {/* Per-port costs */}
+      {portGroups.map(({ portCall, cost }) => {
+        const entry = cost ?? emptyCostEntry(portCall.id, portCall.portName);
+        const hasEntry = !!cost;
 
-          {portCosts.length === 0 && (
-            <p className="text-xs text-muted-foreground">No costs added for this port yet.</p>
-          )}
-
-          {portCosts.length > 0 && (
-            <div className="space-y-3">
-              {/* Header */}
-              <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-2 text-xs text-muted-foreground px-1">
-                <span>Proforma D/A</span>
-                <span>Final D/A</span>
-                <span>Pro. Lashing</span>
-                <span>Final Lashing</span>
-                <span>Pilotage</span>
-                <span>Towage</span>
-                <span>Agency Fee</span>
-                <span></span>
+        return (
+          <div key={portCall.id} className="bg-background/40 border border-border rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-background/20">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full shrink-0 ${portCall.role === 'load' ? 'bg-green-400' : portCall.role === 'discharge' ? 'bg-red-400' : 'bg-amber-400'}`} />
+                <span className="text-sm font-semibold text-foreground">{portCall.portName || '(Unnamed)'}</span>
+                <span className="text-xs capitalize text-muted-foreground">· {portCall.role}</span>
               </div>
-              {portCosts.map((cost) => (
-                <div key={cost.id} className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-2 items-center">
-                  <NumInput value={cost.proformaDa} onChange={(v) => updateCost(cost.id, { proformaDa: v })} />
-                  <div className="relative">
-                    <NumInput value={cost.finalDa} onChange={(v) => updateCost(cost.id, { finalDa: v })} />
-                    {cost.proformaDa > 0 && cost.finalDa > 0 && (
-                      <span className={`absolute -top-4 right-0 text-xs ${deviationColor(cost.proformaDa, cost.finalDa, threshold)}`}>
-                        {cost.proformaDa > 0 ? `${((cost.finalDa - cost.proformaDa) / cost.proformaDa * 100).toFixed(1)}%` : ''}
-                      </span>
-                    )}
-                  </div>
-                  <NumInput value={cost.proformaLashing} onChange={(v) => updateCost(cost.id, { proformaLashing: v })} />
-                  <NumInput value={cost.finalLashing} onChange={(v) => updateCost(cost.id, { finalLashing: v })} />
-                  <NumInput value={cost.pilotage} onChange={(v) => updateCost(cost.id, { pilotage: v })} />
-                  <NumInput value={cost.towage} onChange={(v) => updateCost(cost.id, { towage: v })} />
-                  <NumInput value={cost.agencyFee} onChange={(v) => updateCost(cost.id, { agencyFee: v })} />
-                  <button
-                    type="button"
-                    onClick={() => removeCost(cost.id)}
-                    className="p-1.5 text-muted-foreground hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+              {!hasEntry && (
+                <button type="button" onClick={() => ensureCostForPort(portCall.id, portCall.portName)}
+                  className="text-xs px-2 py-0.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary rounded transition-colors">
+                  + Masraf Ekle
+                </button>
+              )}
+            </div>
+
+            {hasEntry && (
+              <div className="p-4">
+                {/* Header row */}
+                <div className="grid grid-cols-[120px_1fr_1fr_60px] gap-2 mb-1.5 px-1">
+                  <span className="text-[10px] text-muted-foreground font-medium">Kalem</span>
+                  <span className="text-[10px] text-muted-foreground font-medium">Proforma ($)</span>
+                  <span className="text-[10px] text-muted-foreground font-medium">Final ($)</span>
+                  <span className="text-[10px] text-muted-foreground font-medium text-right">Dev.</span>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
+                <div className="space-y-1.5">
+                  {COST_ROWS.map(({ label, proKey, finKey }) => {
+                    const pro = entry[proKey] as number;
+                    const fin = entry[finKey] as number;
+                    return (
+                      <div key={label} className="grid grid-cols-[120px_1fr_1fr_60px] gap-2 items-center">
+                        <span className="text-xs text-foreground">{label}</span>
+                        <Num value={pro} onChange={(v) => updateCost(entry.id, { [proKey]: v } as Partial<CostEntry>)} />
+                        <Num value={fin} onChange={(v) => updateCost(entry.id, { [finKey]: v } as Partial<CostEntry>)} />
+                        <span className={`text-[10px] text-right font-medium ${devColor(pro, fin, threshold)}`}>
+                          {pro > 0 && fin > 0 ? `${((fin - pro) / pro * 100).toFixed(1)}%` : '—'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Port subtotal */}
+                <div className="mt-3 pt-2 border-t border-border/50 flex justify-between text-xs">
+                  <span className="text-muted-foreground">Port toplamı</span>
+                  <div className="flex gap-6">
+                    <span>Pro: <strong>{formatCurrency(entry.proformaDa + entry.proformaPilotage + entry.proformaTowage + entry.proformaAgencyFee + entry.proformaOther, 0)}</strong></span>
+                    <span>Final: <strong className={devColor(
+                      entry.proformaDa + entry.proformaPilotage + entry.proformaTowage + entry.proformaAgencyFee + entry.proformaOther,
+                      entry.finalDa + entry.finalPilotage + entry.finalTowage + entry.finalAgencyFee + entry.finalOther,
+                      threshold)}>{formatCurrency(entry.finalDa + entry.finalPilotage + entry.finalTowage + entry.finalAgencyFee + entry.finalOther, 0)}</strong></span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
 
-      {/* Unassigned costs (legacy) */}
-      {unassignedCosts.length > 0 && (
+      {/* Cargo-level costs summary (from step 2) */}
+      {cargoes.some((c) => (c.lashingProforma ?? 0) + (c.lashingFinal ?? 0) + (c.otherCostsProforma ?? 0) + (c.otherCostsFinal ?? 0) > 0) && (
         <div className="bg-background/40 border border-border rounded-xl p-4">
-          <h4 className="text-xs font-medium text-muted-foreground mb-2">Other Costs</h4>
-          {unassignedCosts.map((cost) => (
-            <div key={cost.id} className="text-xs text-muted-foreground">
-              {cost.portName}: Various costs
-            </div>
-          ))}
+          <h3 className="text-sm font-semibold text-foreground mb-3">Yük Masrafları (Step 2&apos;den)</h3>
+          <div className="grid grid-cols-[1fr_100px_100px] gap-2 mb-1 px-1">
+            <span className="text-[10px] text-muted-foreground">Yük</span>
+            <span className="text-[10px] text-muted-foreground">Proforma ($)</span>
+            <span className="text-[10px] text-muted-foreground">Final ($)</span>
+          </div>
+          {cargoes.map((c) => {
+            const pro = (c.lashingProforma ?? 0) + (c.otherCostsProforma ?? 0);
+            const fin = (c.lashingFinal ?? 0) + (c.otherCostsFinal ?? 0);
+            if (pro + fin === 0) return null;
+            return (
+              <div key={c.id} className="grid grid-cols-[1fr_100px_100px] gap-2 items-center py-1">
+                <span className="text-xs text-foreground capitalize">{c.cargoType} {c.chartererName ? `· ${c.chartererName}` : ''}</span>
+                <span className="text-xs">{formatCurrency(pro, 0)}</span>
+                <span className={`text-xs font-medium ${devColor(pro, fin, threshold)}`}>{formatCurrency(fin, 0)}</span>
+              </div>
+            );
+          })}
         </div>
-      )}
-
-      {portRotation.length === 0 && (
-        <button
-          type="button"
-          onClick={addCostEntry}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-lg text-xs font-medium transition-colors"
-        >
-          <Plus className="h-3.5 w-3.5" /> Add Cost Entry
-        </button>
       )}
 
       {/* Canal costs */}
       <div className="bg-background/40 border border-border rounded-xl p-4 space-y-3">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-foreground">Canal Transit Costs</h3>
+          <h3 className="text-sm font-semibold text-foreground">Kanal / Boğaz Masrafları</h3>
           {(hasBosphorus || hasSuez || hasDardanelles) && (
             <span className="flex items-center gap-1 text-xs text-amber-400">
-              <AlertTriangle className="h-3 w-3" /> Auto-detected from port rotation
+              <AlertTriangle className="h-3 w-3" /> Rotadan tespit edildi
             </span>
           )}
         </div>
-
-        <div className="space-y-3">
-          {([
-            { type: 'suez', label: 'Suez Canal', flagged: hasSuez },
-            { type: 'bosphorus', label: 'Bosphorus Strait', flagged: hasBosphorus },
-            { type: 'dardanelles', label: 'Dardanelles Strait', flagged: hasDardanelles },
-          ] as const).map(({ type, label, flagged }) => {
-            const canalCost = canalCosts.find((c) => c.canalType === type);
-            return (
-              <div key={type} className={`p-3 rounded-lg border transition-colors ${flagged ? 'border-amber-400/30 bg-amber-400/5' : 'border-border/50'}`}>
-                <div className="flex items-center gap-3 mb-2">
-                  <input
-                    type="checkbox"
-                    id={`canal-${type}`}
-                    checked={!!canalCost}
-                    onChange={() => toggleCanalCost(type)}
-                    className="rounded border-border"
-                  />
-                  <label htmlFor={`canal-${type}`} className="text-sm text-foreground font-medium cursor-pointer">
-                    {label}
-                    {flagged && <span className="ml-2 text-xs text-amber-400">(flagged)</span>}
-                  </label>
-                </div>
-                {canalCost && (
-                  <div className="grid grid-cols-2 gap-3 ml-6">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Proforma Cost ($)</p>
-                      <NumInput value={canalCost.proformaCost} onChange={(v) => updateCanalCost(canalCost.id, { proformaCost: v })} />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Final Cost ($)</p>
-                      <NumInput value={canalCost.finalCost} onChange={(v) => updateCanalCost(canalCost.id, { finalCost: v })} />
-                    </div>
-                  </div>
-                )}
+        {([
+          { type: 'suez', label: 'Süveyş Kanalı', flagged: hasSuez },
+          { type: 'bosphorus', label: 'Boğaziçi', flagged: hasBosphorus },
+          { type: 'dardanelles', label: 'Çanakkale Boğazı', flagged: hasDardanelles },
+        ] as const).map(({ type, label, flagged }) => {
+          const cc = canalCosts.find((c) => c.canalType === type);
+          return (
+            <div key={type} className={`p-3 rounded-lg border transition-colors ${flagged ? 'border-amber-400/30 bg-amber-400/5' : 'border-border/50'}`}>
+              <div className="flex items-center gap-3 mb-2">
+                <input type="checkbox" id={`canal-${type}`} checked={!!cc} onChange={() => toggleCanalCost(type)} className="rounded border-border" />
+                <label htmlFor={`canal-${type}`} className="text-sm font-medium text-foreground cursor-pointer">
+                  {label}{flagged && <span className="ml-2 text-xs text-amber-400">(rotada var)</span>}
+                </label>
               </div>
-            );
-          })}
+              {cc && (
+                <div className="grid grid-cols-2 gap-3 ml-6">
+                  <div><p className="text-xs text-muted-foreground mb-1">Proforma ($)</p><Num value={cc.proformaCost} onChange={(v) => updateCanalCost(cc.id, { proformaCost: v })} /></div>
+                  <div><p className="text-xs text-muted-foreground mb-1">Final ($)</p><Num value={cc.finalCost} onChange={(v) => updateCanalCost(cc.id, { finalCost: v })} /></div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Grand total */}
+      <div className="bg-card border border-border rounded-xl p-4">
+        <h3 className="text-sm font-semibold text-foreground mb-3">Genel Toplam</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-3 bg-background/50 rounded-lg">
+            <p className="text-xs text-muted-foreground mb-1">Toplam Proforma</p>
+            <p className="text-lg font-bold text-foreground">{formatCurrency(totalPro, 0)}</p>
+          </div>
+          <div className="p-3 bg-background/50 rounded-lg">
+            <p className="text-xs text-muted-foreground mb-1">Toplam Final</p>
+            <p className={`text-lg font-bold ${devColor(totalPro, totalFin, threshold)}`}>{formatCurrency(totalFin, 0)}</p>
+          </div>
         </div>
+        {totalPro > 0 && totalFin > 0 && (
+          <div className={`mt-2 text-center text-sm font-semibold ${devColor(totalPro, totalFin, threshold)}`}>
+            Sapma: {((totalFin - totalPro) / totalPro * 100).toFixed(1)}%
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, GripVertical, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, GripVertical, AlertTriangle } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import type { PortCall, PortRole, Voyage } from '@/types';
 import type { Port } from '@/types';
@@ -106,10 +106,6 @@ export function StepPortRotation({ data, onChange }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function syncFromCargoes() {
-    const derived = buildRotationFromCargoes(data);
-    if (derived.length > 0) onChange({ ...data, portRotation: derived });
-  }
 
   function addPort() {
     onChange({ ...data, portRotation: [...portRotation, emptyPortCall()] });
@@ -161,25 +157,14 @@ export function StepPortRotation({ data, onChange }: Props) {
           <h2 className="text-base font-semibold text-foreground">Port Rotation</h2>
           <p className="text-xs text-muted-foreground mt-0.5">Yüklerden otomatik oluşturulur. Drag ile sıralayabilirsin.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={syncFromCargoes}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-background hover:bg-border/50 border border-border text-muted-foreground hover:text-foreground rounded-lg text-xs font-medium transition-colors"
-            title="Yüklerden yeniden oluştur"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            Sync
-          </button>
-          <button
-            type="button"
-            onClick={addPort}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-lg text-xs font-medium transition-colors"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Add Port
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={addPort}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-lg text-xs font-medium transition-colors"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Add Port
+        </button>
       </div>
 
       {/* Transit alerts */}

@@ -16,8 +16,6 @@ export interface Port {
 
 export interface CargoPort {
   portName: string;
-  proformaDa: number;
-  finalDa: number;
 }
 
 export interface Cargo {
@@ -33,6 +31,11 @@ export interface Cargo {
   freightRate: number;
   freightType: FreightType;
   brokeragePercent: number;
+  freightPayable: number;
+  lashingProforma: number;
+  lashingFinal: number;
+  otherCostsProforma: number;
+  otherCostsFinal: number;
 }
 
 export interface PortCall {
@@ -53,12 +56,14 @@ export interface CostEntry {
   portName: string;
   proformaDa: number;
   finalDa: number;
-  proformaLashing: number;
-  finalLashing: number;
-  pilotage: number;
-  towage: number;
-  agencyFee: number;
-  otherCosts: number;
+  proformaPilotage: number;
+  finalPilotage: number;
+  proformaTowage: number;
+  finalTowage: number;
+  proformaAgencyFee: number;
+  finalAgencyFee: number;
+  proformaOther: number;
+  finalOther: number;
 }
 
 export interface CanalCost {

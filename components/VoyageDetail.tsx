@@ -270,14 +270,16 @@ export function VoyageDetail({ voyage }: Props) {
                   <div key={cost.id} className="bg-background/40 p-4 rounded-lg border border-border/50">
                     <p className="text-sm font-medium text-foreground mb-3">{cost.portName}</p>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                      <CostRow label="Proforma D/A" value={cost.proformaDa} />
+                      <CostRow label="Pro. D/A" value={cost.proformaDa} />
                       <CostRow label="Final D/A" value={cost.finalDa} />
-                      <CostRow label="Pro. Lashing" value={cost.proformaLashing} />
-                      <CostRow label="Final Lashing" value={cost.finalLashing} />
-                      {cost.pilotage > 0 && <CostRow label="Pilotage" value={cost.pilotage} />}
-                      {cost.towage > 0 && <CostRow label="Towage" value={cost.towage} />}
-                      {cost.agencyFee > 0 && <CostRow label="Agency Fee" value={cost.agencyFee} />}
-                      {cost.otherCosts > 0 && <CostRow label="Other" value={cost.otherCosts} />}
+                      {(cost.proformaPilotage > 0 || cost.finalPilotage > 0) && <CostRow label="Pro. Pilotage" value={cost.proformaPilotage} />}
+                      {cost.finalPilotage > 0 && <CostRow label="Final Pilotage" value={cost.finalPilotage} />}
+                      {(cost.proformaTowage > 0 || cost.finalTowage > 0) && <CostRow label="Pro. Towage" value={cost.proformaTowage} />}
+                      {cost.finalTowage > 0 && <CostRow label="Final Towage" value={cost.finalTowage} />}
+                      {(cost.proformaAgencyFee > 0 || cost.finalAgencyFee > 0) && <CostRow label="Pro. Agency" value={cost.proformaAgencyFee} />}
+                      {cost.finalAgencyFee > 0 && <CostRow label="Final Agency" value={cost.finalAgencyFee} />}
+                      {(cost.proformaOther > 0 || cost.finalOther > 0) && <CostRow label="Pro. Other" value={cost.proformaOther} />}
+                      {cost.finalOther > 0 && <CostRow label="Final Other" value={cost.finalOther} />}
                     </div>
                   </div>
                 ))}
