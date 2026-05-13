@@ -18,6 +18,7 @@ export default function VariancePage() {
 
   return (
     <AppShell>
+      <div className="flex-1 overflow-y-auto">
       <div className="p-6 space-y-5">
         <div className="flex items-center justify-between">
           <div>
@@ -43,6 +44,7 @@ export default function VariancePage() {
         ) : (
           <VarianceTable items={allItems} threshold={threshold} />
         )}
+      </div>
       </div>
     </AppShell>
   );

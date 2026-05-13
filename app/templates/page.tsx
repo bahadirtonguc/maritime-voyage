@@ -47,6 +47,7 @@ export default function TemplatesPage() {
 
   return (
     <AppShell>
+      <div className="flex-1 overflow-y-auto">
       <div className="p-6 space-y-5">
         <div className="flex items-center justify-between">
           <div>
@@ -100,7 +101,7 @@ export default function TemplatesPage() {
                   <div className="text-xs text-muted-foreground space-y-1 mb-4">
                     <p>{(template.voyage as Voyage).portRotation?.length ?? 0} ports · {(template.voyage as Voyage).cargoes?.length ?? 0} cargoes</p>
                     <p>Created: {new Date(template.createdAt).toLocaleDateString()}</p>
-                    {pnl.netFreight > 0 && <p>Est. net freight: {formatCurrency(pnl.netFreight, 0)}</p>}
+                    {pnl.freightIn > 0 && <p>Est. net freight: {formatCurrency(pnl.freightIn, 0)}</p>}
                   </div>
 
                   <button
@@ -124,6 +125,7 @@ export default function TemplatesPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
       />
+      </div>
     </AppShell>
   );
 }

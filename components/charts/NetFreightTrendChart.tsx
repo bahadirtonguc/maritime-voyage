@@ -38,7 +38,7 @@ export function NetFreightTrendChart({ voyages }: Props) {
     if (!v.createdAt) return;
     const month = format(startOfMonth(parseISO(v.createdAt)), 'MMM yyyy');
     const pnl = calculatePnL(v);
-    monthly[month] = (monthly[month] ?? 0) + pnl.netFreight;
+    monthly[month] = (monthly[month] ?? 0) + pnl.netVoyageResult;
   });
 
   const data = Object.entries(monthly)
@@ -52,7 +52,7 @@ export function NetFreightTrendChart({ voyages }: Props) {
         <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">No data yet</div>
       ) : (
         <ResponsiveContainer width="100%" height={220}>
-          <AreaChart data={data}>
+          <AreaChart data={data} style={{ background: 'transparent' }}>
             <defs>
               <linearGradient id="netFreightGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
@@ -67,7 +67,7 @@ export function NetFreightTrendChart({ voyages }: Props) {
               tickLine={false}
               tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(148,163,184,0.2)', strokeWidth: 1 }} />
             <Area
               type="monotone"
               dataKey="value"
@@ -76,6 +76,7 @@ export function NetFreightTrendChart({ voyages }: Props) {
               fill="url(#netFreightGradient)"
               dot={{ fill: '#22c55e', r: 3, strokeWidth: 0 }}
               activeDot={{ r: 5, fill: '#22c55e' }}
+              isAnimationActive={false}
             />
           </AreaChart>
         </ResponsiveContainer>

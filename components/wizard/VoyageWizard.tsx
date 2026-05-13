@@ -2,23 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Save, Loader2 } from 'lucide-react';
-import { WizardProgress } from '@/components/WizardProgress';
+import { Save, Loader2 } from 'lucide-react';
 import { StepVesselFreight } from './StepVesselFreight';
 import { StepCargoes } from './StepCargoes';
 import { StepPortRotation } from './StepPortRotation';
-import { StepCosts } from './StepCosts';
+import { TabVesselCertificates } from './TabVesselCertificates';
 import { PnLPanel } from '@/components/PnLPanel';
 import { useToast } from '@/components/ToastProvider';
 import { useVoyages } from '@/hooks/useVoyages';
 import { generateId } from '@/lib/utils';
 import type { Voyage } from '@/types';
 
-const STEPS = [
-  { label: 'Vessel & Freight', description: 'Basic info' },
-  { label: 'Cargoes', description: 'Cargo lots' },
-  { label: 'Port Rotation', description: 'Route & map' },
-  { label: 'Costs', description: 'P&L' },
+const TABS = [
+  { id: 'vessel',       label: 'Vessel' },
+  { id: 'cargoes',      label: 'Cargoes & Freight' },
+  { id: 'ports',        label: 'Port Rotation' },
+  { id: 'certificates', label: 'Certificates' },
 ];
 
 function defaultVoyage(): Partial<Voyage> {
@@ -46,22 +45,20 @@ interface Props {
 }
 
 export function VoyageWizard({ initialVoyage, isEdit }: Props) {
-  const [step, setStep] = useState(0);
+  const [activeTab, setActiveTab] = useState(0);
   const [voyage, setVoyage] = useState<Partial<Voyage>>(initialVoyage ?? defaultVoyage());
   const [saving, setSaving] = useState(false);
   const { saveVoyage } = useVoyages();
   const { toast } = useToast();
   const router = useRouter();
 
-  // Auto-save draft to localStorage
+  // Auto-save draft to localStorage (new voyages only)
   useEffect(() => {
     if (!isEdit) {
       const key = 'voyage-draft';
       const draft = localStorage.getItem(key);
       if (draft) {
-        try {
-          setVoyage(JSON.parse(draft));
-        } catch {}
+        try { setVoyage(JSON.parse(draft)); } catch {}
       }
     }
   }, [isEdit]);
@@ -72,15 +69,11 @@ export function VoyageWizard({ initialVoyage, isEdit }: Props) {
     }
   }, [voyage, isEdit]);
 
-  function isStepValid(s: number): boolean {
-    if (s === 0) return !!(voyage.vesselName && voyage.voyageNumber);
-    return true;
-  }
-
   async function handleSave() {
     setSaving(true);
     try {
       const full: Voyage = {
+        ...voyage,
         id: initialVoyage?.id ?? generateId(),
         voyageNumber: voyage.voyageNumber ?? '',
         vesselName: voyage.vesselName ?? '',
@@ -89,6 +82,8 @@ export function VoyageWizard({ initialVoyage, isEdit }: Props) {
         laydaysStart: voyage.laydaysStart ?? '',
         cancellingDate: voyage.cancellingDate ?? '',
         status: voyage.status ?? 'planned',
+        freightIn: voyage.freightIn ?? 0,
+        freightOut: voyage.freightOut ?? 0,
         cargoes: voyage.cargoes ?? [],
         portRotation: voyage.portRotation ?? [],
         costs: voyage.costs ?? [],
@@ -99,7 +94,6 @@ export function VoyageWizard({ initialVoyage, isEdit }: Props) {
         createdAt: initialVoyage?.createdAt ?? new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-
       const ok = await saveVoyage(full);
       if (ok) {
         localStorage.removeItem('voyage-draft');
@@ -113,72 +107,53 @@ export function VoyageWizard({ initialVoyage, isEdit }: Props) {
     }
   }
 
-  const steps = [
-    <StepVesselFreight key="step1" data={voyage} onChange={setVoyage} />,
-    <StepCargoes key="step2" data={voyage} onChange={setVoyage} />,
-    <StepPortRotation key="step3" data={voyage} onChange={setVoyage} />,
-    <StepCosts key="step4" data={voyage} onChange={setVoyage} />,
+  const canSave = !!(voyage.vesselName && voyage.voyageNumber);
+
+  const tabContent = [
+    <StepVesselFreight    key="vessel" data={voyage} onChange={setVoyage} />,
+    <StepCargoes          key="cargoes" data={voyage} onChange={setVoyage} />,
+    <StepPortRotation     key="ports"  data={voyage} onChange={setVoyage} />,
+    <TabVesselCertificates key="certs" data={voyage} />,
   ];
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 p-6">
-      {/* Main wizard */}
+      {/* Main area */}
       <div className="flex-1 min-w-0">
-        {/* Progress */}
-        <div className="bg-card border border-border rounded-xl p-5 mb-6">
-          <WizardProgress steps={STEPS} currentStep={step} />
-        </div>
 
-        {/* Step content */}
-        <div className="bg-card border border-border rounded-xl p-6 min-h-[400px]">
-          {steps[step]}
-        </div>
+        {/* Tab bar + Save button row */}
+        <div className="flex items-center justify-between mb-4 gap-4">
+          <div className="flex items-center gap-1 bg-background/50 border border-border rounded-xl p-1 overflow-x-auto">
+            {TABS.map((tab, i) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(i)}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                  activeTab === i
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-border/50'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between mt-4">
           <button
             type="button"
-            onClick={() => setStep((s) => Math.max(0, s - 1))}
-            disabled={step === 0}
-            className="flex items-center gap-1.5 px-4 py-2 border border-border rounded-lg text-sm text-muted-foreground hover:text-foreground hover:border-border-light disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            onClick={handleSave}
+            disabled={saving || !canSave}
+            className="flex items-center gap-1.5 px-5 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-sm font-semibold transition-colors shrink-0"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Back
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {isEdit ? 'Update Voyage' : 'Save Voyage'}
           </button>
+        </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving || !isStepValid(0)}
-              className="flex items-center gap-1.5 px-4 py-2 border border-border rounded-lg text-sm text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Save Draft
-            </button>
-
-            {step < STEPS.length - 1 ? (
-              <button
-                type="button"
-                onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
-                disabled={!isStepValid(step)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
-              >
-                Next
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving || !isStepValid(0)}
-                className="flex items-center gap-1.5 px-5 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-colors"
-              >
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {isEdit ? 'Update Voyage' : 'Create Voyage'}
-              </button>
-            )}
-          </div>
+        {/* Active tab content */}
+        <div className="bg-card border border-border rounded-xl p-6 min-h-[400px]">
+          {tabContent[activeTab]}
         </div>
       </div>
 

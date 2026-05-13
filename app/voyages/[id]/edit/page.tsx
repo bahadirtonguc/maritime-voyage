@@ -29,19 +29,21 @@ export default function EditVoyagePage() {
 
   return (
     <AppShell>
-      <div className="p-6 pb-2">
-        <h1 className="text-xl font-bold text-foreground">Edit Voyage</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Update voyage details</p>
-      </div>
-      {loading ? (
-        <div className="p-6 space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-20 bg-card border border-border rounded-xl animate-pulse" />
-          ))}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-6 pb-2">
+          <h1 className="text-xl font-bold text-foreground">Edit Voyage</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Update voyage details</p>
         </div>
-      ) : voyage ? (
-        <VoyageWizard initialVoyage={voyage} isEdit />
-      ) : null}
+        {loading ? (
+          <div className="p-6 space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-20 bg-card border border-border rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : voyage ? (
+          <VoyageWizard initialVoyage={voyage} isEdit />
+        ) : null}
+      </div>
     </AppShell>
   );
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/AppShell';
-import { VoyageDetail } from '@/components/VoyageDetail';
+import { VoyageDashboard } from '@/components/VoyageDashboard';
 import type { Voyage } from '@/types';
 
 export default function VoyageDetailPage() {
@@ -20,8 +20,7 @@ export default function VoyageDetailPage() {
           router.push('/');
           return;
         }
-        const data = await res.json();
-        setVoyage(data);
+        setVoyage(await res.json());
       } catch {
         router.push('/');
       } finally {
@@ -34,13 +33,13 @@ export default function VoyageDetailPage() {
   return (
     <AppShell>
       {loading ? (
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 overflow-y-auto">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-20 bg-card border border-border rounded-xl animate-pulse" />
           ))}
         </div>
       ) : voyage ? (
-        <VoyageDetail voyage={voyage} />
+        <VoyageDashboard voyage={voyage} />
       ) : null}
     </AppShell>
   );

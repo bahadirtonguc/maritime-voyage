@@ -102,12 +102,6 @@ export default function LoginPage() {
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
-
-          <div className="mt-6 p-3 bg-background/50 rounded-lg border border-border/50">
-            <p className="text-xs text-muted-foreground text-center">
-              Demo credentials: <span className="text-foreground font-mono">admin</span> / <span className="text-foreground font-mono">voyage2024</span>
-            </p>
-          </div>
         </div>
       </div>
     </div>

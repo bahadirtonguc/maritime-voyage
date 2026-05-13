@@ -28,12 +28,13 @@ export function useVoyages() {
 
   const saveVoyage = useCallback(async (voyage: Voyage): Promise<boolean> => {
     try {
+      const body = JSON.stringify(voyage);
       const res = await fetch(
         voyage.id ? `/api/voyages/${voyage.id}` : '/api/voyages',
         {
           method: voyage.id ? 'PUT' : 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(voyage),
+          body,
         }
       );
       if (!res.ok) throw new Error('Failed to save voyage');

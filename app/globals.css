@@ -72,6 +72,21 @@ body {
   color: #94a3b8;
 }
 
+/* Recharts: force transparent background so dark card shows through */
+.recharts-wrapper,
+.recharts-surface {
+  background: transparent !important;
+}
+.recharts-cartesian-grid-bg {
+  fill: transparent !important;
+}
+/* Hover cursor rectangle */
+.recharts-tooltip-cursor,
+.recharts-rectangle.recharts-tooltip-cursor {
+  fill: rgba(148, 163, 184, 0.06) !important;
+  stroke: none !important;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

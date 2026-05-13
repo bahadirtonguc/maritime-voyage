@@ -1,45 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Ship, LayoutDashboard, Plus, ChevronLeft, ChevronRight,
-  LogOut, BookTemplate, Search, X, TrendingUp,
+  LogOut, TrendingUp,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
-import { StatusBadge } from './StatusBadge';
-import type { Voyage, VoyageStatus } from '@/types';
+import { useVoyages } from '@/hooks/useVoyages';
 import { calculatePnL } from '@/lib/pnl';
 
-interface Props {
-  voyages: Voyage[];
-  loading: boolean;
-}
+type Filter = 'all' | 'planned' | 'active' | 'completed';
 
-const STATUS_FILTERS: { label: string; value: VoyageStatus | 'all' }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'Planned', value: 'planned' },
-  { label: 'Active', value: 'active' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'Closed', value: 'closed' },
+const FILTERS: { label: string; value: Filter }[] = [
+  { label: 'All',       value: 'all' },
+  { label: 'Planned',   value: 'planned' },
+  { label: 'Active',    value: 'active' },
+  { label: 'Done',      value: 'completed' },
 ];
 
-export function Sidebar({ voyages, loading }: Props) {
+export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<VoyageStatus | 'all'>('all');
+  const [filter, setFilter] = useState<Filter>('all');
+  const { voyages, loading } = useVoyages();
 
-  const filtered = voyages.filter((v) => {
-    const matchSearch =
-      !search ||
-      v.vesselName.toLowerCase().includes(search.toLowerCase()) ||
-      v.voyageNumber.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === 'all' || v.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
+  const filtered = voyages.filter(
+    (v) => filter === 'all' || v.status === filter
+  );
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -50,107 +40,111 @@ export function Sidebar({ voyages, loading }: Props) {
     <aside
       className={cn(
         'flex flex-col bg-card border-r border-border transition-all duration-300 shrink-0',
-        collapsed ? 'w-16' : 'w-72'
+        collapsed ? 'w-12' : 'w-56'
       )}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      {/* Logo */}
+      <div className="flex items-center justify-between px-3 py-3 border-b border-border">
         {!collapsed && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src="https://core-shipping.com/uploads/logo.png"
             alt="Core Shipping"
-            style={{ maxHeight: 28, width: 'auto', filter: 'brightness(0) invert(1)' }}
+            style={{ maxHeight: 24, width: 'auto', filter: 'brightness(0) invert(1)' }}
           />
         )}
-        {collapsed && <Ship className="h-5 w-5 text-primary mx-auto" />}
+        {collapsed && <Ship className="h-4 w-4 text-primary mx-auto" />}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1 rounded-lg hover:bg-border/50 text-muted-foreground hover:text-foreground transition-colors"
+          className="p-0.5 rounded hover:bg-border/50 text-muted-foreground hover:text-foreground transition-colors"
         >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
         </button>
       </div>
 
       {/* Nav */}
-      <nav className="p-2 border-b border-border space-y-0.5">
-        <NavItem href="/" icon={<LayoutDashboard className="h-4 w-4" />} label="Dashboard" collapsed={collapsed} active={pathname === '/'} />
-        <NavItem href="/voyages/new" icon={<Plus className="h-4 w-4" />} label="New Voyage" collapsed={collapsed} active={pathname === '/voyages/new'} />
-        <NavItem href="/templates" icon={<BookTemplate className="h-4 w-4" />} label="Templates" collapsed={collapsed} active={pathname === '/templates'} />
-        <NavItem href="/variance" icon={<TrendingUp className="h-4 w-4" />} label="Variance Analysis" collapsed={collapsed} active={pathname === '/variance'} />
+      <nav className="px-1.5 py-1.5 border-b border-border space-y-0.5">
+        <NavItem href="/" icon={<LayoutDashboard className="h-3.5 w-3.5" />} label="Dashboard" collapsed={collapsed} active={pathname === '/'} />
+        <NavItem href="/voyages/new" icon={<Plus className="h-3.5 w-3.5" />} label="New Voyage" collapsed={collapsed} active={pathname === '/voyages/new'} />
+        <NavItem href="/variance" icon={<TrendingUp className="h-3.5 w-3.5" />} label="Variance" collapsed={collapsed} active={pathname === '/variance'} />
       </nav>
 
-      {/* Voyage list */}
+      {/* Compact voyage list */}
       {!collapsed && (
-        <div className="flex-1 overflow-hidden flex flex-col">
-          {/* Search */}
-          <div className="p-3 border-b border-border">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search voyages..."
-                className="w-full pl-8 pr-7 py-1.5 bg-background border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-              />
-              {search && (
-                <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                  <X className="h-3 w-3" />
-                </button>
-              )}
-            </div>
-            {/* Status filter */}
-            <div className="flex gap-1 mt-2 flex-wrap">
-              {STATUS_FILTERS.map((f) => (
-                <button
-                  key={f.value}
-                  onClick={() => setStatusFilter(f.value)}
-                  className={cn(
-                    'px-2 py-0.5 rounded-full text-xs transition-colors border',
-                    statusFilter === f.value
-                      ? 'bg-primary/20 border-primary/40 text-primary'
-                      : 'bg-transparent border-border text-muted-foreground hover:border-border-light'
-                  )}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Filter tabs */}
+          <div className="flex border-b border-border">
+            {FILTERS.map((f) => (
+              <button
+                key={f.value}
+                onClick={() => setFilter(f.value)}
+                className={cn(
+                  'flex-1 py-1 text-[10px] font-semibold transition-colors',
+                  filter === f.value
+                    ? 'text-primary border-b-2 border-primary -mb-px'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
 
-          {/* Voyage items */}
-          <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          {/* Rows */}
+          <div className="flex-1 overflow-y-auto">
             {loading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-16 bg-background/50 rounded-lg animate-pulse" />
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-9 border-b border-border/30 animate-pulse bg-background/20" />
               ))
             ) : filtered.length === 0 ? (
-              <div className="text-center text-xs text-muted-foreground py-8">
-                {voyages.length === 0 ? 'No voyages yet' : 'No matches'}
-              </div>
+              <p className="text-[10px] text-muted-foreground text-center py-4">No voyages</p>
             ) : (
-              filtered.map((v) => <VoyageItem key={v.id} voyage={v} active={pathname === `/voyages/${v.id}`} />)
+              filtered.map((v) => {
+                const pnl = calculatePnL(v);
+                const from = v.portRotation[0]?.portName;
+                const to   = v.portRotation[v.portRotation.length - 1]?.portName;
+                const route = from && to && from !== to ? `${from}→${to}` : from ?? '—';
+                const isActive = pathname === `/voyages/${v.id}`;
+                return (
+                  <Link
+                    key={v.id}
+                    href={`/voyages/${v.id}`}
+                    className={cn(
+                      'flex items-center justify-between px-2.5 py-1.5 border-b border-border/30 transition-colors',
+                      isActive ? 'bg-primary/10' : 'hover:bg-white/5'
+                    )}
+                  >
+                    <div className="min-w-0 mr-1.5">
+                      <p className="text-[12px] font-bold text-foreground truncate leading-tight">{v.vesselName}</p>
+                      <p className="text-[11px] text-muted-foreground truncate leading-tight">{route}</p>
+                    </div>
+                    <span className={cn(
+                      'text-[11px] font-bold tabular-nums shrink-0',
+                      pnl.netVoyageResult >= 0 ? 'text-green-400' : 'text-red-400'
+                    )}>
+                      {formatCurrency(pnl.netVoyageResult, 0)}
+                    </span>
+                  </Link>
+                );
+              })
             )}
           </div>
         </div>
       )}
 
-      {/* Footer + Logout */}
-      <div className="p-2 border-t border-border space-y-1">
-        {!collapsed && (
-          <p className="px-3 py-1 text-center text-[10px] text-muted-foreground/50 select-none">
-            Developed by Bero · 2026
-          </p>
-        )}
+      {/* World Clock */}
+      {!collapsed && <WorldClock />}
+
+      {/* Footer */}
+      <div className="px-1.5 py-1.5 border-t border-border">
         <button
           onClick={handleLogout}
           className={cn(
-            'flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors',
+            'flex items-center gap-2 w-full px-2 py-1.5 rounded text-xs text-muted-foreground hover:text-red-400 hover:bg-red-400/10 transition-colors',
             collapsed && 'justify-center'
           )}
         >
-          <LogOut className="h-4 w-4 shrink-0" />
+          <LogOut className="h-3.5 w-3.5 shrink-0" />
           {!collapsed && 'Sign out'}
         </button>
       </div>
@@ -158,16 +152,14 @@ export function Sidebar({ voyages, loading }: Props) {
   );
 }
 
-function NavItem({
-  href, icon, label, collapsed, active,
-}: {
+function NavItem({ href, icon, label, collapsed, active }: {
   href: string; icon: React.ReactNode; label: string; collapsed: boolean; active: boolean;
 }) {
   return (
     <Link
       href={href}
       className={cn(
-        'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors',
+        'flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors',
         active
           ? 'bg-primary/15 text-primary border border-primary/20'
           : 'text-muted-foreground hover:text-foreground hover:bg-border/50',
@@ -180,33 +172,37 @@ function NavItem({
   );
 }
 
-function VoyageItem({ voyage, active }: { voyage: Voyage; active: boolean }) {
-  const pnl = calculatePnL(voyage);
-  const routeSummary = voyage.portRotation.length > 0
-    ? `${voyage.portRotation[0]?.portName ?? '?'} → ${voyage.portRotation[voyage.portRotation.length - 1]?.portName ?? '?'}`
-    : 'No ports';
+const CLOCKS = [
+  { label: 'London',    tz: 'Europe/London' },
+  { label: 'Istanbul',  tz: 'Europe/Istanbul' },
+  { label: 'Dubai',     tz: 'Asia/Dubai' },
+  { label: 'Singapore', tz: 'Asia/Singapore' },
+  { label: 'Rotterdam', tz: 'Europe/Amsterdam' },
+  { label: 'New York',  tz: 'America/New_York' },
+];
+
+function WorldClock() {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
-    <Link
-      href={`/voyages/${voyage.id}`}
-      className={cn(
-        'block p-2.5 rounded-lg border transition-colors',
-        active
-          ? 'bg-primary/10 border-primary/20'
-          : 'bg-background/30 border-border/50 hover:border-border hover:bg-background/60'
-      )}
-    >
-      <div className="flex items-start justify-between gap-2 mb-1">
-        <span className="text-xs font-semibold text-foreground truncate">{voyage.vesselName}</span>
-        <StatusBadge status={voyage.status} className="shrink-0" />
+    <div className="mx-2 mb-1.5 px-2.5 py-2 rounded bg-background/40 border border-border/50">
+      <p className="text-[9px] uppercase tracking-widest font-semibold text-muted-foreground/60 mb-1.5">World Clock</p>
+      <div className="space-y-1">
+        {CLOCKS.map(({ label, tz }) => {
+          const time = now.toLocaleTimeString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit' });
+          return (
+            <div key={tz} className="flex items-center justify-between">
+              <span className="text-[10px] text-muted-foreground">{label}</span>
+              <span className="text-[10px] font-mono text-foreground/80 tabular-nums">{time}</span>
+            </div>
+          );
+        })}
       </div>
-      <p className="text-xs text-muted-foreground truncate">{routeSummary}</p>
-      <div className="flex items-center justify-between mt-1">
-        <span className="text-xs text-muted-foreground font-mono">{voyage.voyageNumber}</span>
-        <span className={cn('text-xs font-medium', pnl.netVoyageResult >= 0 ? 'text-green-400' : 'text-red-400')}>
-          {formatCurrency(pnl.netVoyageResult, 0)}
-        </span>
-      </div>
-    </Link>
+    </div>
   );
 }

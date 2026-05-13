@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyToken, COOKIE_NAME } from '@/lib/auth';
 
-const COOKIE_NAME = 'maritime_session';
 const PUBLIC_PATHS = ['/login', '/api/auth/login'];
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Allow public paths through without a token
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
-  if (pathname.startsWith('/api/')) {
-    return NextResponse.next();
-  }
-
   const token = req.cookies.get(COOKIE_NAME)?.value;
-  if (!token) {
-    return NextResponse.redirect(new URL('/login', req.url));
+  const user = token ? await verifyToken(token) : null;
+
+  if (!user) {
+    const loginUrl = req.nextUrl.clone();
+    loginUrl.pathname = '/login';
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();

@@ -148,9 +148,9 @@ export async function exportVoyagePdf(voyage: Voyage): Promise<void> {
   y += 5;
 
   const pnlRows: [string, string, boolean?][] = [
-    ['Gross Freight', fmt(pnl.grossFreight)],
-    ['Total Brokerage', `(${fmt(pnl.totalBrokerage)})`],
-    ['Net Freight', fmt(pnl.netFreight), true],
+    ['Freight In', fmt(pnl.freightIn)],
+    ['Freight Out', `(${fmt(pnl.freightOut)})`],
+    ['Gross Margin', fmt(pnl.grossMargin), true],
     ['Total Proforma Costs', `(${fmt(pnl.totalProformaCosts)})`],
     ['Total Final Costs', `(${fmt(pnl.totalFinalCosts)})`],
     ['Cost Variance', `${pnl.costVariancePercent >= 0 ? '+' : ''}${pnl.costVariancePercent.toFixed(1)}%`],

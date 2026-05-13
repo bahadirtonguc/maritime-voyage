@@ -27,9 +27,57 @@ export async function getVoyage(id: string): Promise<Voyage | undefined> {
 }
 
 export async function saveVoyage(voyage: Voyage): Promise<void> {
+  // Deduplicate portRotation by portName+role — when there are duplicates, merge
+  // their cost fields (summing numeric values) so no entered data is ever lost.
+  const portMergeMap = new Map<string, typeof voyage.portRotation[0]>();
+  for (const p of voyage.portRotation ?? []) {
+    const key = `${p.portName}||${p.role}`;
+    const existing = portMergeMap.get(key);
+    if (!existing) {
+      portMergeMap.set(key, { ...p });
+    } else {
+      // Merge: for every numeric cost key, take the max (prefer a non-zero value over zero)
+      const merged = { ...existing };
+      const costKeys = [
+        'proformaDa','finalDa','proformaPilotage','finalPilotage',
+        'proformaTowage','finalTowage','proformaAgencyFee','finalAgencyFee',
+        'proformaOther','finalOther','lashingProforma','lashingFinal',
+        'otherCostsProforma','otherCostsFinal','proformaFacilitation','finalFacilitation',
+        'proformaArmedGuards','finalArmedGuards','proformaEwri','finalEwri',
+        'proformaAdditionalInsurance','finalAdditionalInsurance',
+        'proformaSurveyInspection','finalSurveyInspection',
+      ] as const;
+      for (const k of costKeys) {
+        const ev = (existing[k] ?? 0) as number;
+        const pv = (p[k] ?? 0) as number;
+        // Keep whichever is non-zero; if both non-zero, prefer the newer (p) value
+        (merged as Record<string, unknown>)[k] = pv !== 0 ? pv : ev;
+      }
+      // Also prefer non-empty string fields from the newer entry
+      if (p.agentCompany) merged.agentCompany = p.agentCompany;
+      if (p.agentName) merged.agentName = p.agentName;
+      if (p.agentEmail) merged.agentEmail = p.agentEmail;
+      if (p.agentPhone) merged.agentPhone = p.agentPhone;
+      if (p.eta) merged.eta = p.eta;
+      if (p.etd) merged.etd = p.etd;
+      if (p.ata) merged.ata = p.ata;
+      if (p.atd) merged.atd = p.atd;
+      portMergeMap.set(key, merged);
+    }
+  }
+  const deduplicatedPortRotation = Array.from(portMergeMap.values());
+
+  // Legacy `costs` array is no longer used — all costs live on portRotation entries.
+  // Clearing it prevents phantom rows from ever reappearing on the detail page.
+  const cleanVoyage: Voyage = {
+    ...voyage,
+    portRotation: deduplicatedPortRotation,
+    costs: [],
+  };
+
   const { error } = await supabase
     .from('voyages')
-    .upsert({ id: voyage.id, data: voyage }, { onConflict: 'id' });
+    .upsert({ id: cleanVoyage.id, data: cleanVoyage }, { onConflict: 'id' });
   if (error) throw error;
 }
 

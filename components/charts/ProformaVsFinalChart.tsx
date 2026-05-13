@@ -1,35 +1,11 @@
 'use client';
 
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell,
-} from 'recharts';
 import type { Voyage } from '@/types';
 import { calculateTotalProformaCosts, calculateTotalFinalCosts } from '@/lib/pnl';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
 
 interface Props {
   voyages: Voyage[];
-}
-
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: Array<{ value: number; name: string; color: string }>;
-  label?: string;
-}
-
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-card border border-border rounded-lg px-4 py-3 shadow-xl text-xs">
-      <p className="font-semibold text-foreground mb-2">{label}</p>
-      {payload.map((p) => (
-        <div key={p.name} className="flex items-center justify-between gap-4">
-          <span style={{ color: p.color }}>{p.name}</span>
-          <span className="font-mono text-foreground">{formatCurrency(p.value, 0)}</span>
-        </div>
-      ))}
-    </div>
-  );
 }
 
 export function ProformaVsFinalChart({ voyages }: Props) {
@@ -38,44 +14,79 @@ export function ProformaVsFinalChart({ voyages }: Props) {
     const final = calculateTotalFinalCosts(v);
     const threshold = v.deviationThreshold ?? 5;
     const deviation = proforma > 0 ? ((final - proforma) / proforma) * 100 : 0;
-    return {
-      name: v.vesselName.length > 10 ? v.vesselName.slice(0, 10) + '…' : v.vesselName,
-      proforma,
-      final,
-      overThreshold: Math.abs(deviation) > threshold,
-    };
+    const status = Math.abs(deviation) <= threshold ? 'ok' : Math.abs(deviation) <= threshold * 2 ? 'warning' : 'danger';
+    return { name: v.vesselName, proforma, final, deviation, status };
   });
+
+  const hasData = data.some((d) => d.proforma > 0 || d.final > 0);
+  const max = Math.max(...data.map((d) => Math.max(d.proforma, d.final)), 1);
 
   return (
     <div className="bg-card border border-border rounded-xl p-5">
-      <h3 className="text-sm font-semibold text-foreground mb-4">Proforma vs Final Costs</h3>
-      {data.length === 0 ? (
-        <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">No voyage data yet</div>
+      <h3 className="text-sm font-semibold text-foreground mb-5">Proforma vs Final Costs</h3>
+
+      {!hasData ? (
+        <div className="h-48 flex flex-col items-center justify-center text-muted-foreground text-sm gap-1">
+          <span>No cost data entered yet</span>
+          <span className="text-xs opacity-60">Add costs in Step 4 of a voyage</span>
+        </div>
       ) : (
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={data} barCategoryGap="30%" barGap={4}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-            <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
-            <YAxis
-              tick={{ fill: '#94a3b8', fontSize: 10 }}
-              axisLine={false}
-              tickLine={false}
-              tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ fontSize: 11, color: '#94a3b8' }} />
-            <Bar dataKey="proforma" name="Proforma" radius={[3, 3, 0, 0]}>
-              {data.map((entry, i) => (
-                <Cell key={i} fill="#3b82f6" fillOpacity={entry.overThreshold ? 0.5 : 1} />
-              ))}
-            </Bar>
-            <Bar dataKey="final" name="Final" radius={[3, 3, 0, 0]}>
-              {data.map((entry, i) => (
-                <Cell key={i} fill={entry.overThreshold ? '#f59e0b' : '#ef4444'} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="space-y-4">
+          {data.map((d, i) => (
+            <div key={i} className="space-y-1.5">
+              {/* Vessel name + deviation */}
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-foreground truncate max-w-[160px]">{d.name}</span>
+                {d.proforma > 0 && (
+                  <span className={cn('font-bold',
+                    d.status === 'ok' ? 'text-green-400' :
+                    d.status === 'warning' ? 'text-amber-400' : 'text-red-400'
+                  )}>
+                    {d.deviation >= 0 ? '+' : ''}{d.deviation.toFixed(1)}%
+                  </span>
+                )}
+              </div>
+
+              {/* Proforma bar */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground w-14 shrink-0">Proforma</span>
+                <div className="flex-1 h-5 bg-background/60 rounded overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500/70 rounded transition-none flex items-center justify-end pr-2"
+                    style={{ width: `${(d.proforma / max) * 100}%`, minWidth: d.proforma > 0 ? '2px' : '0' }}
+                  >
+                    {d.proforma > 0 && (
+                      <span className="text-[10px] text-white font-medium whitespace-nowrap">
+                        {formatCurrency(d.proforma, 0)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Final bar */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground w-14 shrink-0">Final</span>
+                <div className="flex-1 h-5 bg-background/60 rounded overflow-hidden">
+                  <div
+                    className={cn(
+                      'h-full rounded transition-none flex items-center justify-end pr-2',
+                      d.status === 'ok' ? 'bg-green-500/70' :
+                      d.status === 'warning' ? 'bg-amber-500/70' : 'bg-red-500/70'
+                    )}
+                    style={{ width: `${(d.final / max) * 100}%`, minWidth: d.final > 0 ? '2px' : '0' }}
+                  >
+                    {d.final > 0 && (
+                      <span className="text-[10px] text-white font-medium whitespace-nowrap">
+                        {formatCurrency(d.final, 0)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

@@ -58,7 +58,7 @@ export function CargoDonutChart({ voyages }: Props) {
       ) : (
         <div className="relative">
           <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
+            <PieChart style={{ background: 'transparent' }}>
               <Pie
                 data={data}
                 cx="50%"
@@ -67,6 +67,7 @@ export function CargoDonutChart({ voyages }: Props) {
                 outerRadius={85}
                 dataKey="value"
                 paddingAngle={2}
+                isAnimationActive={false}
               >
                 {data.map((entry, i) => (
                   <Cell key={i} fill={CARGO_COLORS[entry.name] ?? '#64748b'} />
