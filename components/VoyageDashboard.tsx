@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Edit, Download, FileSpreadsheet, Trash2, BookTemplate, Loader2, FileText } from 'lucide-react';
+import { Edit, Download, FileSpreadsheet, Trash2, Loader2, FileText } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { StatusBadge } from './StatusBadge';
@@ -10,9 +10,8 @@ import { RemarksSection } from './RemarksSection';
 import { AppointmentLetterModal } from './AppointmentLetterModal';
 import { useToast } from './ToastProvider';
 import { useVoyages } from '@/hooks/useVoyages';
-import { useTemplates } from '@/hooks/useTemplates';
 import { calculatePnL } from '@/lib/pnl';
-import { formatCurrency, generateId, cn } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
 import type { Voyage, PortCall } from '@/types';
 
 const COST_FIELDS: { pro: keyof PortCall; fin: keyof PortCall; label: string }[] = [
@@ -42,7 +41,6 @@ export function VoyageDashboard({ voyage }: Props) {
   const [showRemarks, setShowRemarks] = useState(false);
   const [appointmentPort, setAppointmentPort] = useState<PortCall | null>(null);
   const { deleteVoyage } = useVoyages();
-  const { saveTemplate } = useTemplates();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -70,58 +68,57 @@ export function VoyageDashboard({ voyage }: Props) {
     catch { toast('Failed to generate Excel', 'error'); } finally { setExporting(null); }
   }
 
-  async function handleSaveTemplate() {
-    const name = prompt('Template name:');
-    if (!name) return;
-    const ok = await saveTemplate({
-      id: generateId(), name,
-      voyage: {
-        voyageNumber: voyage.voyageNumber, vesselName: voyage.vesselName,
-        vesselType: voyage.vesselType, vesselSpeed: voyage.vesselSpeed,
-        laydaysStart: voyage.laydaysStart, cancellingDate: voyage.cancellingDate,
-        cargoes: voyage.cargoes, portRotation: voyage.portRotation,
-        costs: voyage.costs, canalCosts: voyage.canalCosts,
-        deviationThreshold: voyage.deviationThreshold, remarks: voyage.remarks, documents: voyage.documents,
-      },
-      createdAt: new Date().toISOString(),
-    });
-    if (ok) toast('Saved as template', 'success'); else toast('Failed to save template', 'error');
-  }
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
 
       {/* ── Header ── */}
-      <div className="shrink-0 px-4 py-3 border-b border-border flex items-center justify-between gap-3 bg-card/40">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-base font-bold text-foreground truncate">{voyage.vesselName}</span>
-            <StatusBadge status={voyage.status} />
-            <span className="text-xs text-muted-foreground font-mono">{voyage.voyageNumber}</span>
-            {voyage.vesselType && <span className="text-xs text-muted-foreground">· {voyage.vesselType}</span>}
+      <div className="shrink-0 px-4 py-3 border-b border-border bg-card/40">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Vessel identity */}
+          <span className="text-base font-bold text-foreground">{voyage.vesselName}</span>
+          <StatusBadge status={voyage.status} />
+          <span className="text-xs text-muted-foreground font-mono">{voyage.voyageNumber}</span>
+          {voyage.vesselType && <span className="text-xs text-muted-foreground">· {voyage.vesselType}</span>}
+
+          {/* Action buttons — sit directly after the identity pills */}
+          <div className="flex items-center gap-1.5 ml-2">
+            <Link
+              href={`/voyages/${voyage.id}/edit`}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border bg-background/50 hover:bg-border/60 text-xs font-medium text-foreground transition-colors"
+            >
+              <Edit className="h-3 w-3" /> Edit
+            </Link>
+
+            <button
+              onClick={handleExportPdf}
+              disabled={exporting === 'pdf'}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border bg-background/50 hover:bg-border/60 disabled:opacity-40 text-xs font-medium text-foreground transition-colors"
+            >
+              {exporting === 'pdf'
+                ? <Loader2 className="h-3 w-3 animate-spin" />
+                : <Download className="h-3 w-3" />}
+              PDF
+            </button>
+
+            <button
+              onClick={handleExportExcel}
+              disabled={exporting === 'excel'}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border bg-background/50 hover:bg-border/60 disabled:opacity-40 text-xs font-medium text-foreground transition-colors"
+            >
+              {exporting === 'excel'
+                ? <Loader2 className="h-3 w-3 animate-spin" />
+                : <FileSpreadsheet className="h-3 w-3" />}
+              Excel
+            </button>
+
+            <button
+              onClick={() => setDeleteOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-red-500/40 bg-red-500/10 hover:bg-red-500/20 text-xs font-medium text-red-400 transition-colors"
+            >
+              <Trash2 className="h-3 w-3" /> Delete
+            </button>
           </div>
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <button onClick={handleExportPdf} disabled={exporting === 'pdf'} title="PDF"
-            className="p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors">
-            {exporting === 'pdf' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-          </button>
-          <button onClick={handleExportExcel} disabled={exporting === 'excel'} title="Excel"
-            className="p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors">
-            {exporting === 'excel' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="h-3.5 w-3.5" />}
-          </button>
-          <button onClick={handleSaveTemplate} title="Save as template"
-            className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-            <BookTemplate className="h-3.5 w-3.5" />
-          </button>
-          <Link href={`/voyages/${voyage.id}/edit`} title="Edit"
-            className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-            <Edit className="h-3.5 w-3.5" />
-          </Link>
-          <button onClick={() => setDeleteOpen(true)} title="Delete"
-            className="p-1.5 text-red-400/60 hover:text-red-400 transition-colors">
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
         </div>
       </div>
 
