@@ -206,12 +206,14 @@ export function AppointmentLetterModal({ voyage, port, onClose }: Props) {
             </div>
           </div>
 
-          {/* Signatory */}
-          <div className="rounded-xl border border-border bg-background/40 p-3">
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">Signatory</p>
-            <p className="text-xs font-bold text-foreground">Bahadir Tonguc</p>
-            <p className="text-[10px] text-muted-foreground">Director of Operations · Core Shipping B.V.</p>
-          </div>
+          {/* Signatory — only shown once the user has entered their name */}
+          {opsName.trim() && (
+            <div className="rounded-xl border border-border bg-background/40 p-3">
+              <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-1">Signatory</p>
+              <p className="text-xs font-bold text-foreground">{opsName.trim()}</p>
+              <p className="text-[10px] text-muted-foreground">Operations · Core Shipping B.V.</p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
