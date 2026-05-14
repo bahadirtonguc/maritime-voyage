@@ -12,6 +12,7 @@ import { useToast } from './ToastProvider';
 import { useVoyages } from '@/hooks/useVoyages';
 import { calculatePnL } from '@/lib/pnl';
 import { formatCurrency, cn } from '@/lib/utils';
+import { portFlag } from '@/lib/flagEmoji';
 import type { Voyage, PortCall } from '@/types';
 
 const COST_FIELDS: { pro: keyof PortCall; fin: keyof PortCall; label: string }[] = [
@@ -158,7 +159,9 @@ export function VoyageDashboard({ voyage }: Props) {
                       <span className="text-[10px] text-muted-foreground/60 w-4 text-right">{i + 1}</span>
                       <div className={cn('w-1.5 h-1.5 rounded-full shrink-0',
                         pc.role === 'load' ? 'bg-green-400' : pc.role === 'discharge' ? 'bg-red-400' : 'bg-amber-400')} />
-                      <span className="text-xs font-medium text-foreground truncate">{pc.portName}</span>
+                      <span className="text-xs font-medium text-foreground truncate">
+                        {portFlag(pc.portName)} {pc.portName}
+                      </span>
                       <span className="text-[10px] text-muted-foreground capitalize ml-auto shrink-0">{pc.role}</span>
                       {pc.eta && <span className="text-[10px] text-muted-foreground/60">{pc.eta}</span>}
                     </div>
@@ -273,7 +276,7 @@ export function VoyageDashboard({ voyage }: Props) {
                               <div className="flex items-center gap-2">
                                 <div className={cn('w-2 h-2 rounded-full shrink-0',
                                   pc.role === 'load' ? 'bg-green-400' : pc.role === 'discharge' ? 'bg-red-400' : 'bg-amber-400')} />
-                                <span className="font-bold text-foreground">{pc.portName}</span>
+                                <span className="font-bold text-foreground">{portFlag(pc.portName)} {pc.portName}</span>
                                 <span className="text-muted-foreground capitalize text-[10px]">({pc.role})</span>
                                 <button
                                   onClick={() => setAppointmentPort(pc)}
@@ -531,6 +534,7 @@ function PortTimeline({ portRotation }: { portRotation: Voyage['portRotation'] }
                 {/* Port name + role */}
                 <div className="text-center mb-1.5 w-28">
                   <p className={`text-[10px] font-bold uppercase tracking-wide truncate ${textColor}`}>
+                    <span className="not-italic normal-case">{portFlag(pc.portName)}</span>{' '}
                     {pc.portName}
                   </p>
                   <p className="text-[9px] text-muted-foreground capitalize">{pc.role}</p>

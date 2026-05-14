@@ -344,6 +344,117 @@ function RadarChart({ voyages, pnlMap }: {
   );
 }
 
+/* ─── BDI Ticker bar ───────────────────────────────────────────── */
+interface BdiIndex { symbol: string; price: number; change: number; changePercent: number }
+
+const BDI_PLACEHOLDER: BdiIndex[] = [
+  { symbol: 'BDI', price: 0, change: 0, changePercent: 0 },
+  { symbol: 'BCI', price: 0, change: 0, changePercent: 0 },
+  { symbol: 'BSI', price: 0, change: 0, changePercent: 0 },
+  { symbol: 'BHSI', price: 0, change: 0, changePercent: 0 },
+];
+
+function BdiBar() {
+  const [indices, setIndices] = useState<BdiIndex[]>([]);
+
+  useEffect(() => {
+    fetch('/api/bdi')
+      .then((r) => r.json())
+      .then((d) => { if (d.data?.length) setIndices(d.data); })
+      .catch(() => {});
+  }, []);
+
+  const items = indices.length > 0 ? indices : BDI_PLACEHOLDER;
+  const hasData = indices.length > 0;
+
+  function Item({ d }: { d: BdiIndex }) {
+    const pos = d.change >= 0;
+    const clr = pos ? '#22c55e' : '#e05252';
+    const arrow = pos ? '▲' : '▼';
+    const sign  = pos ? '+' : '';
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+        <span style={{ color: '#94a3b8', fontSize: 11 }}>⚓</span>
+        <span style={{ color: '#e2e8f0', fontWeight: 700, fontSize: 12, letterSpacing: '0.02em' }}>
+          {d.symbol}
+        </span>
+        <span style={{ color: '#e2e8f0', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
+          {d.price > 0 ? d.price.toLocaleString(undefined, { maximumFractionDigits: 0 }) : '—'}
+        </span>
+        {d.price > 0 && (
+          <span style={{ color: clr, fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
+            {arrow} {sign}{Math.round(d.change)} ({sign}{d.changePercent.toFixed(2)}%)
+          </span>
+        )}
+      </span>
+    );
+  }
+
+  const doubled = [...items, ...items];
+
+  return (
+    <div
+      style={{
+        height: 36,
+        background: '#0d1f3c',
+        borderTop:    `1px solid ${C.bd}`,
+        borderBottom: `1px solid ${C.bd}`,
+        display: 'flex',
+        alignItems: 'center',
+        overflow: 'hidden',
+        flexShrink: 0,
+      }}
+    >
+      <style>{`
+        @keyframes bdiRTL {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        @keyframes bdiDot {
+          0%, 100% { opacity: 1; }
+          50%       { opacity: 0.2; }
+        }
+      `}</style>
+
+      {/* Static LIVE badge */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 5,
+        padding: '0 14px',
+        borderRight: `1px solid ${C.bd}`,
+        flexShrink: 0, height: '100%',
+      }}>
+        <span style={{
+          width: 6, height: 6, borderRadius: '50%',
+          background: C.amber,
+          display: 'inline-block',
+          animation: 'bdiDot 1.2s ease-in-out infinite',
+        }} />
+        <span style={{ color: C.amber, fontSize: 10, fontWeight: 800, letterSpacing: '0.1em' }}>
+          LIVE
+        </span>
+      </div>
+
+      {/* Scrolling strip */}
+      <div style={{ flex: 1, overflow: 'hidden', height: '100%', display: 'flex', alignItems: 'center' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          whiteSpace: 'nowrap',
+          animation: hasData ? 'bdiRTL 40s linear infinite' : 'none',
+          gap: 0,
+        }}>
+          {doubled.map((d, i) => (
+            <span key={i} style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+              <Item d={d} />
+              <span style={{ color: 'rgba(255,255,255,0.18)', margin: '0 1.8rem', fontSize: 10 }}>◆</span>
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Time helper ──────────────────────────────────────────────── */
 function timeAgo(date: Date): string {
   const diffMs   = Date.now() - date.getTime();
@@ -511,6 +622,11 @@ export function DashboardContent() {
             value={loading || avgDev === null ? '—' : `${avgDev >= 0 ? '+' : ''}${avgDev.toFixed(1)}%`}
             sub="− = under budget · + = over budget"
             valueColor={avgDev === null ? C.muted : avgDev < 0 ? C.green : avgDev <= 5 ? C.amber : C.coral} />
+        </div>
+
+        {/* ── BDI / Freight Indices ticker — full bleed ── */}
+        <div className="-mx-4">
+          <BdiBar />
         </div>
 
         {/* ── Row 2: 4 columns, 190px ── */}
