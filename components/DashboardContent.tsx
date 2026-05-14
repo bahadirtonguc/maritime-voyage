@@ -360,9 +360,9 @@ function timeAgo(date: Date): string {
 interface NewsItem { title: string; link: string }
 
 function NewsTicker() {
-  const [feed, setFeed]             = useState<'dry' | 'africa'>('dry');
-  const [items, setItems]           = useState<NewsItem[]>([]);
-  const [loadingNews, setLoading]   = useState(false);
+  const [feed, setFeed]           = useState<'dry' | 'africa'>('dry');
+  const [items, setItems]         = useState<NewsItem[]>([]);
+  const [loadingNews, setLoading] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -373,59 +373,69 @@ function NewsTicker() {
       .finally(() => setLoading(false));
   }, [feed]);
 
-  const duration = Math.max(10, (items.length || 5) * 3);
+  /* 4 s per headline, minimum 20 s total */
+  const duration = Math.max(20, (items.length || 5) * 4);
 
   return (
-    <div className="flex flex-col px-4 py-3 rounded-xl border overflow-hidden"
-      style={{ background: C.card, borderColor: C.bd }}>
+    <div
+      className="flex flex-col gap-0.5 px-4 py-3 rounded-xl border overflow-hidden"
+      style={{ background: C.card, borderColor: C.bd }}
+    >
       <style>{`
-        @keyframes tickerScroll {
-          0%   { transform: translateY(0); }
-          100% { transform: translateY(-50%); }
+        @keyframes tickerRTL {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
       `}</style>
 
-      {/* Header row */}
-      <div className="flex items-center justify-between mb-2 shrink-0">
+      {/* Label + feed tabs — mirrors KpiTile header row */}
+      <div className="flex items-center justify-between">
         <span className="text-[9px] uppercase tracking-widest font-semibold" style={{ color: C.muted }}>
           Shipping News
         </span>
-        <div className="flex gap-1">
+        <div className="flex gap-1 shrink-0">
           {(['dry', 'africa'] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFeed(f)}
               className="px-2 py-0.5 rounded text-[9px] font-semibold uppercase transition-colors"
-              style={{
-                background: feed === f ? C.blue : C.deep,
-                color: feed === f ? '#fff' : C.muted,
-              }}
+              style={{ background: feed === f ? C.blue : C.deep, color: feed === f ? '#fff' : C.muted }}
             >
-              {f === 'dry' ? 'Dry Cargo' : 'Africa'}
+              {f === 'dry' ? 'Dry' : 'Africa'}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Ticker body */}
-      <div className="overflow-hidden flex-1" style={{ position: 'relative' }}>
+      {/* Horizontal RTL ticker — single row, clips at edges */}
+      <div className="overflow-hidden" style={{ flex: '1 1 auto' }}>
         {loadingNews ? (
-          <p className="text-[9px] mt-1" style={{ color: C.muted }}>Loading…</p>
+          <p className="text-[11px] leading-none mt-1" style={{ color: C.muted }}>Loading…</p>
         ) : items.length === 0 ? (
-          <p className="text-[9px] mt-1" style={{ color: C.muted }}>No news available</p>
+          <p className="text-[11px] leading-none mt-1" style={{ color: C.muted }}>No news available</p>
         ) : (
-          <div style={{ animation: `tickerScroll ${duration}s linear infinite` }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              whiteSpace: 'nowrap',
+              animation: `tickerRTL ${duration}s linear infinite`,
+              height: '100%',
+            }}
+          >
             {[...items, ...items].map((item, i) => (
-              <a
-                key={i}
-                href={item.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block py-1 truncate text-[10px] hover:underline"
-                style={{ color: C.text, borderBottom: `1px solid ${C.bd}` }}
-              >
-                {item.title}
-              </a>
+              <span key={i} style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+                <a
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[12px] hover:underline"
+                  style={{ color: C.text, cursor: 'pointer' }}
+                >
+                  {item.title}
+                </a>
+                <span style={{ color: C.muted, margin: '0 1.5rem', fontSize: 10 }}>◆</span>
+              </span>
             ))}
           </div>
         )}
