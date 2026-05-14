@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getVoyages, saveVoyage, getUserPermittedVoyageIds } from '@/lib/storage';
+import { getVoyages, saveVoyage, getUserPermittedVoyageIds, setVoyagePermission } from '@/lib/storage';
 import { verifyToken, COOKIE_NAME } from '@/lib/auth';
 import type { Voyage } from '@/types';
 
@@ -26,9 +26,15 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const user = await authenticate(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  // Only admins can create voyages
-  if (user.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
   const voyage: Voyage = await req.json();
   await saveVoyage(voyage);
+
+  // If a regular user creates a voyage, automatically grant them edit access.
+  // Admin already sees everything so no permission row needed.
+  if (user.role !== 'admin') {
+    await setVoyagePermission(voyage.id, user.username, 'edit');
+  }
+
   return NextResponse.json(voyage, { status: 201 });
 }
