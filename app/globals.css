@@ -93,10 +93,10 @@ body {
   }
 }
 
-/* ── Uppercase all free-text inputs ─────────────────────────────── */
-input[type="text"],
-input[type="search"],
-input:not([type]),
-textarea {
+/* ── Uppercase all free-text inputs (opt-out: data-no-uppercase) ── */
+input[type="text"]:not([data-no-uppercase]),
+input[type="search"]:not([data-no-uppercase]),
+input:not([type]):not([data-no-uppercase]),
+textarea:not([data-no-uppercase]) {
   text-transform: uppercase;
 }

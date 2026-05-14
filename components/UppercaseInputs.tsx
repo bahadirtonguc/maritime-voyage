@@ -33,6 +33,8 @@ export function UppercaseInputs() {
         (tag === 'TEXTAREA');
 
       if (!eligible) return;
+      // Explicit opt-out
+      if ((t as HTMLElement).hasAttribute('data-no-uppercase')) return;
 
       const upper = t.value.toUpperCase();
       if (upper === t.value) return;           // already uppercase → no-op, prevents loop
