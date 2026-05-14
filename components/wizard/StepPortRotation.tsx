@@ -416,17 +416,14 @@ export function StepPortRotation({ data, onChange }: Props) {
                         <div className={`w-1.5 h-1.5 rounded-full ${roleColor}`} />
                         <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Port Costs</p>
                       </div>
-                      <div className="grid grid-cols-[1fr_100px_100px_80px] gap-x-2 gap-y-1.5 items-center">
+                      <div className="grid grid-cols-[1fr_100px_100px] gap-x-2 gap-y-1.5 items-center">
                         {/* Column headers */}
                         <span className="text-[10px] text-muted-foreground/50" />
                         <span className="text-[10px] text-blue-400/80 font-medium text-right">Forecast ($)</span>
                         <span className="text-[10px] text-muted-foreground font-medium text-right">Final ($)</span>
-                        <span className="text-[10px] text-muted-foreground font-medium text-right">Variance</span>
                         {COST_FIELDS.map(({ pro, fin, label }) => {
                           const proVal = (pc[pro] as number) ?? 0;
                           const finVal = (pc[fin] as number) ?? 0;
-                          const variance = proVal > 0 ? ((finVal - proVal) / proVal) * 100 : 0;
-                          const hasVariance = proVal > 0 && finVal > 0 && variance !== 0;
                           return (
                             <>
                               <span key={`${pc.id}-${label}-lbl`} className="text-xs text-muted-foreground">{label}</span>
@@ -438,22 +435,16 @@ export function StepPortRotation({ data, onChange }: Props) {
                                 value={finVal || ''}
                                 onChange={(e) => updatePort(pc.id, { [fin]: parseFloat(e.target.value) || 0 })}
                                 className={inputCls} />
-                              <span key={`${pc.id}-${label}-var`} className={`text-[10px] font-mono text-right ${hasVariance ? (variance > 0 ? 'text-red-400' : 'text-green-400') : 'text-muted-foreground/30'}`}>
-                                {hasVariance ? `${variance > 0 ? '+' : ''}${variance.toFixed(1)}%` : '—'}
-                              </span>
                             </>
                           );
                         })}
                       </div>
                       {proSum > 0 && (
-                        <div className="pt-2 border-t border-border/40 grid grid-cols-[1fr_100px_100px_80px] gap-x-2 items-center">
+                        <div className="pt-2 border-t border-border/40 grid grid-cols-[1fr_100px_100px] gap-x-2 items-center">
                           <span className="text-xs font-semibold text-muted-foreground">Total</span>
                           <span className="text-xs font-mono text-blue-400/80 text-right">${proSum.toLocaleString()}</span>
                           <span className={`text-xs font-mono font-semibold text-right ${finSum > proSum ? 'text-red-400' : finSum > 0 ? 'text-green-400' : 'text-muted-foreground/40'}`}>
                             {finSum > 0 ? `$${finSum.toLocaleString()}` : '—'}
-                          </span>
-                          <span className={`text-[10px] font-mono text-right ${finSum > proSum ? 'text-red-400' : finSum > 0 ? 'text-green-400' : 'text-muted-foreground/30'}`}>
-                            {finSum > 0 && proSum > 0 ? `${finSum > proSum ? '+' : ''}${(((finSum - proSum) / proSum) * 100).toFixed(1)}%` : '—'}
                           </span>
                         </div>
                       )}

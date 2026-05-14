@@ -135,6 +135,11 @@ export function Sidebar() {
       {/* World Clock */}
       {!collapsed && <WorldClock />}
 
+      {/* Copyright */}
+      {!collapsed && (
+        <p className="text-[9px] text-muted-foreground/30 text-center pb-1 select-none">© Bero 2026</p>
+      )}
+
       {/* Footer */}
       <div className="px-1.5 py-1.5 border-t border-border">
         <button

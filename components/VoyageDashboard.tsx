@@ -228,10 +228,6 @@ export function VoyageDashboard({ voyage }: Props) {
               {showRemarks && <div className="mt-3"><RemarksSection voyage={voyage} /></div>}
             </div>
 
-            {/* Copyright */}
-            <div className="mt-auto px-4 py-3 border-t border-border/40">
-              <p className="text-[10px] text-muted-foreground/30 select-none">© Bero 2026</p>
-            </div>
           </div>
 
           {/* ── RIGHT: Cost Analysis Table ── */}
