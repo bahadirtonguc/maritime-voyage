@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Ship, LayoutDashboard, Plus, ChevronLeft, ChevronRight,
-  LogOut,
+  LogOut, Search, X,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useVoyages } from '@/hooks/useVoyages';
@@ -24,12 +24,19 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
-  const [filter, setFilter] = useState<Filter>('all');
-  const { voyages, loading } = useVoyages();
+  const [filter, setFilter]   = useState<Filter>('all');
+  const [search, setSearch]   = useState('');
+  const { voyages, loading }  = useVoyages();
 
-  const filtered = voyages.filter(
-    (v) => filter === 'all' || v.status === filter
-  );
+  const filtered = voyages.filter((v) => {
+    if (filter !== 'all' && v.status !== filter) return false;
+    if (!search.trim()) return true;
+    const q = search.trim().toUpperCase();
+    return (
+      v.vesselName.toUpperCase().includes(q) ||
+      v.voyageNumber.toUpperCase().includes(q)
+    );
+  });
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -67,6 +74,27 @@ export function Sidebar() {
         <NavItem href="/" icon={<LayoutDashboard className="h-3.5 w-3.5" />} label="Dashboard" collapsed={collapsed} active={pathname === '/'} />
         <NavItem href="/voyages/new" icon={<Plus className="h-3.5 w-3.5" />} label="New Voyage" collapsed={collapsed} active={pathname === '/voyages/new'} />
       </nav>
+
+      {/* Search */}
+      {!collapsed && (
+        <div className="px-2 py-1.5 border-b border-border">
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-background border border-border">
+            <Search className="h-3 w-3 shrink-0 text-muted-foreground" />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="VESSEL or VOY#"
+              className="flex-1 bg-transparent text-[11px] text-foreground placeholder:text-muted-foreground/50 outline-none min-w-0"
+            />
+            {search && (
+              <button onClick={() => setSearch('')} className="text-muted-foreground hover:text-foreground">
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Compact voyage list */}
       {!collapsed && (
@@ -115,7 +143,8 @@ export function Sidebar() {
                   >
                     <div className="min-w-0 mr-1.5">
                       <p className="text-[12px] font-bold text-foreground truncate leading-tight">{v.vesselName}</p>
-                      <p className="text-[11px] text-muted-foreground truncate leading-tight">{route}</p>
+                      <p className="text-[10px] text-muted-foreground truncate leading-tight">{route}</p>
+                      <p className="text-[9px] text-muted-foreground/60 truncate leading-tight font-mono">{v.voyageNumber}</p>
                     </div>
                     <span
                       className="text-[11px] font-bold tabular-nums shrink-0"

@@ -92,3 +92,11 @@ body {
     text-wrap: balance;
   }
 }
+
+/* ── Uppercase all free-text inputs ─────────────────────────────── */
+input[type="text"],
+input[type="search"],
+input:not([type]),
+textarea {
+  text-transform: uppercase;
+}
