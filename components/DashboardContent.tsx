@@ -643,12 +643,12 @@ export function DashboardContent() {
 
         </div>
 
-        {/* ── Row 3: AIS + Windy ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        {/* ── Row 3: AIS + Windy — fills remaining vertical space ── */}
+        <div className="flex-1 min-h-0" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
 
           {/* AIS */}
-          <div style={{ background: C.card, borderRadius: '8px', border: `1px solid ${C.bd}`, overflow: 'hidden' }}>
-            <div style={{ padding: '8px' }}>
+          <div style={{ background: C.card, borderRadius: '8px', border: `1px solid ${C.bd}`, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '8px', flexShrink: 0 }}>
               <select
                 value={selectedId}
                 onChange={(e) => setSelectedId(e.target.value)}
@@ -668,7 +668,7 @@ export function DashboardContent() {
                 </p>
               )}
             </div>
-            <div style={{ height: 'calc(100vh - 444px)', overflow: 'hidden' }}>
+            <div style={{ flex: '1 1 0', minHeight: 0, overflow: 'hidden' }}>
               <iframe
                 key={imo ?? 'world'}
                 src={imo
@@ -681,7 +681,7 @@ export function DashboardContent() {
           </div>
 
           {/* Windy */}
-          <div style={{ height: 'calc(100vh - 400px)', overflow: 'hidden', background: C.card, borderRadius: '8px', border: `1px solid ${C.bd}` }}>
+          <div style={{ overflow: 'hidden', background: C.card, borderRadius: '8px', border: `1px solid ${C.bd}` }}>
             <iframe
               src="https://embed.windy.com/embed2.html?lat=5&lon=15&zoom=4&level=surface&overlay=waves&menu=&message=true&marker=&calendar=&pressure=&type=map&location=coordinates&detail=&metricWind=kt&metricTemp=%C2%B0C&radarRange=-1"
               title="Windy"
