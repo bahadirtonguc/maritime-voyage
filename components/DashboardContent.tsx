@@ -344,7 +344,7 @@ function RadarChart({ voyages, pnlMap }: {
   );
 }
 
-/* ─── BDI Ticker bar ───────────────────────────────────────────── */
+/* ─── BDI Tile (KPI card) ──────────────────────────────────────── */
 interface BdiIndex { symbol: string; price: number; change: number; changePercent: number }
 
 const BDI_PLACEHOLDER: BdiIndex[] = [
@@ -354,7 +354,7 @@ const BDI_PLACEHOLDER: BdiIndex[] = [
   { symbol: 'BHSI', price: 0, change: 0, changePercent: 0 },
 ];
 
-function BdiBar() {
+function BdiTile() {
   const [indices, setIndices] = useState<BdiIndex[]>([]);
 
   useEffect(() => {
@@ -364,49 +364,17 @@ function BdiBar() {
       .catch(() => {});
   }, []);
 
-  const items = indices.length > 0 ? indices : BDI_PLACEHOLDER;
+  const items   = indices.length > 0 ? indices : BDI_PLACEHOLDER;
   const hasData = indices.length > 0;
-
-  function Item({ d }: { d: BdiIndex }) {
-    const pos = d.change >= 0;
-    const clr = pos ? '#22c55e' : '#e05252';
-    const arrow = pos ? '▲' : '▼';
-    const sign  = pos ? '+' : '';
-    return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-        <span style={{ color: '#94a3b8', fontSize: 11 }}>⚓</span>
-        <span style={{ color: '#e2e8f0', fontWeight: 700, fontSize: 12, letterSpacing: '0.02em' }}>
-          {d.symbol}
-        </span>
-        <span style={{ color: '#e2e8f0', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
-          {d.price > 0 ? d.price.toLocaleString(undefined, { maximumFractionDigits: 0 }) : '—'}
-        </span>
-        {d.price > 0 && (
-          <span style={{ color: clr, fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
-            {arrow} {sign}{Math.round(d.change)} ({sign}{d.changePercent.toFixed(2)}%)
-          </span>
-        )}
-      </span>
-    );
-  }
-
   const doubled = [...items, ...items];
 
   return (
     <div
-      style={{
-        height: 36,
-        background: '#0d1f3c',
-        borderTop:    `1px solid ${C.bd}`,
-        borderBottom: `1px solid ${C.bd}`,
-        display: 'flex',
-        alignItems: 'center',
-        overflow: 'hidden',
-        flexShrink: 0,
-      }}
+      className="flex flex-col gap-0.5 px-4 py-3 rounded-xl border overflow-hidden"
+      style={{ background: C.card, borderColor: C.bd }}
     >
       <style>{`
-        @keyframes bdiRTL {
+        @keyframes bdiTileRTL {
           0%   { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
@@ -416,39 +384,49 @@ function BdiBar() {
         }
       `}</style>
 
-      {/* Static LIVE badge */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 5,
-        padding: '0 14px',
-        borderRight: `1px solid ${C.bd}`,
-        flexShrink: 0, height: '100%',
-      }}>
-        <span style={{
-          width: 6, height: 6, borderRadius: '50%',
-          background: C.amber,
-          display: 'inline-block',
-          animation: 'bdiDot 1.2s ease-in-out infinite',
-        }} />
-        <span style={{ color: C.amber, fontSize: 10, fontWeight: 800, letterSpacing: '0.1em' }}>
-          LIVE
+      {/* Header row — mirrors KpiTile */}
+      <div className="flex items-center justify-between">
+        <span className="text-[9px] uppercase tracking-widest font-semibold" style={{ color: C.muted }}>
+          Freight Indices
         </span>
+        <div className="flex items-center gap-1.5">
+          <span style={{
+            width: 5, height: 5, borderRadius: '50%',
+            background: C.amber, display: 'inline-block',
+            animation: 'bdiDot 1.2s ease-in-out infinite',
+          }} />
+          <span style={{ color: C.amber, fontSize: 9, fontWeight: 800, letterSpacing: '0.08em' }}>LIVE</span>
+        </div>
       </div>
 
       {/* Scrolling strip */}
-      <div style={{ flex: 1, overflow: 'hidden', height: '100%', display: 'flex', alignItems: 'center' }}>
+      <div className="overflow-hidden" style={{ flex: '1 1 auto' }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
           whiteSpace: 'nowrap',
-          animation: hasData ? 'bdiRTL 40s linear infinite' : 'none',
-          gap: 0,
+          animation: hasData ? 'bdiTileRTL 30s linear infinite' : 'none',
         }}>
-          {doubled.map((d, i) => (
-            <span key={i} style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
-              <Item d={d} />
-              <span style={{ color: 'rgba(255,255,255,0.18)', margin: '0 1.8rem', fontSize: 10 }}>◆</span>
-            </span>
-          ))}
+          {doubled.map((d, i) => {
+            const pos   = d.change >= 0;
+            const clr   = pos ? '#22c55e' : '#e05252';
+            const arrow = pos ? '▲' : '▼';
+            const sign  = pos ? '+' : '';
+            return (
+              <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                <span style={{ color: '#e2e8f0', fontWeight: 700, fontSize: 11 }}>{d.symbol}:</span>
+                <span style={{ color: '#e2e8f0', fontSize: 11, fontVariantNumeric: 'tabular-nums' }}>
+                  {d.price > 0 ? d.price.toLocaleString(undefined, { maximumFractionDigits: 0 }) : '—'}
+                </span>
+                {d.price > 0 && (
+                  <span style={{ color: clr, fontSize: 10, fontVariantNumeric: 'tabular-nums' }}>
+                    {arrow} {sign}{Math.round(d.change)} ({sign}{d.changePercent.toFixed(2)}%)
+                  </span>
+                )}
+                <span style={{ color: 'rgba(255,255,255,0.15)', margin: '0 1.1rem', fontSize: 9 }}>◆</span>
+              </span>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -612,21 +590,17 @@ export function DashboardContent() {
 
       <div className="flex-1 flex flex-col p-4 gap-3 min-h-0 overflow-hidden">
 
-        {/* ── Row 1: KPI tiles (3, full width) ── */}
-        <div className="shrink-0 grid grid-cols-3 gap-3">
+        {/* ── Row 1: KPI tiles — Active Voyages · BDI · News · Avg Deviation ── */}
+        <div className="shrink-0 grid grid-cols-4 gap-3">
           <KpiTile icon={<Ship className="h-3.5 w-3.5" />} label="Active Voyages"
             value={loading ? '—' : String(activeVoyages.length)}
             sub={`${trackable.length} active+planned`} valueColor={C.blue} />
+          <BdiTile />
           <NewsTicker />
           <KpiTile icon={<AlertTriangle className="h-3.5 w-3.5" />} label="Avg Cost Deviation"
             value={loading || avgDev === null ? '—' : `${avgDev >= 0 ? '+' : ''}${avgDev.toFixed(1)}%`}
             sub="− = under budget · + = over budget"
             valueColor={avgDev === null ? C.muted : avgDev < 0 ? C.green : avgDev <= 5 ? C.amber : C.coral} />
-        </div>
-
-        {/* ── BDI / Freight Indices ticker — full bleed ── */}
-        <div className="-mx-4">
-          <BdiBar />
         </div>
 
         {/* ── Row 2: 4 columns, 190px ── */}

@@ -18,14 +18,19 @@ for (const p of portsData as PortEntry[]) {
   }
 }
 
-/** Convert ISO 3166-1 alpha-2 code to flag emoji (e.g. "TR" → "🇹🇷"). */
+/**
+ * Convert ISO 3166-1 alpha-2 code to flag emoji (e.g. "TR" → "🇹🇷").
+ * Each letter maps to a regional indicator symbol by adding 0x1F1A5 to
+ * the uppercase char code:  'T'=84 → 84+0x1F1A5=0x1F1F9 🇹
+ *                           'R'=82 → 82+0x1F1A5=0x1F1F7 🇷  → 🇹🇷
+ */
 export function flagEmoji(code: string): string {
   if (!code || code.length !== 2) return '';
   const u = code.toUpperCase();
   try {
     return String.fromCodePoint(
-      0x1F1E6 + u.charCodeAt(0) - 65,
-      0x1F1E6 + u.charCodeAt(1) - 65,
+      u.charCodeAt(0) + 0x1F1A5,
+      u.charCodeAt(1) + 0x1F1A5,
     );
   } catch {
     return '';
