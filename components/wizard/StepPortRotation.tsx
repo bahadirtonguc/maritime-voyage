@@ -76,7 +76,7 @@ function buildRotationFromCargoes(data: Partial<Voyage>): PortCall[] {
 
 const inputCls = 'w-full px-2 py-1 bg-background border border-border rounded text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 text-right';
 
-// ── Per-port document uploader ─────────────────────────────────────────────
+// ── Shared doc type ────────────────────────────────────────────────────────
 interface PortDoc { name: string; url: string; uploadedAt: string }
 
 function PortDocuments({
@@ -122,6 +122,72 @@ function PortDocuments({
       </div>
       {docs.length === 0 ? (
         <p className="text-[10px] text-muted-foreground/50">No documents uploaded for this port</p>
+      ) : (
+        <div className="space-y-1">
+          {docs.map((d, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <Paperclip className="h-3 w-3 text-muted-foreground/60 shrink-0" />
+              <span className="text-xs text-foreground/80 truncate flex-1">{d.name}</span>
+              <a href={d.url} target="_blank" rel="noopener noreferrer"
+                className="text-primary hover:text-primary/80 transition-colors shrink-0">
+                <ExternalLink className="h-3 w-3" />
+              </a>
+              <button type="button" onClick={() => onUpdate(docs.filter((_, j) => j !== i))}
+                className="text-muted-foreground hover:text-red-400 transition-colors shrink-0">
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Per-canal document uploader ────────────────────────────────────────────
+function CanalDocuments({
+  cc, voyageNumber, onUpdate,
+}: { cc: CanalCost; voyageNumber: string; onUpdate: (docs: PortDoc[]) => void }) {
+  const [uploading, setUploading] = useState(false);
+  const docs: PortDoc[] = cc.canalDocuments ?? [];
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('bucket', 'port-documents');
+      const safeName = cc.canalType.replace(/[^a-zA-Z0-9_-]/g, '_');
+      form.append('path', `${voyageNumber}/canals/${safeName}/${file.name}`);
+      const res = await fetch('/api/upload', { method: 'POST', body: form });
+      const json = await res.json();
+      if (json.url) {
+        onUpdate([...docs, { name: file.name, url: json.url, uploadedAt: new Date().toISOString() }]);
+      }
+    } catch { /* ignore */ } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  }
+
+  return (
+    <div className="ml-6 mt-2 space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground flex items-center gap-1.5">
+          <Paperclip className="h-3 w-3" /> Documents
+        </p>
+        <label className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-medium cursor-pointer transition-colors border ${
+          uploading ? 'opacity-40 cursor-default border-border text-muted-foreground' : 'border-primary/30 text-primary hover:bg-primary/10 border-dashed'
+        }`}>
+          {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+          {uploading ? 'Uploading…' : 'Upload'}
+          <input type="file" className="hidden" disabled={uploading} onChange={handleFile} />
+        </label>
+      </div>
+      {docs.length === 0 ? (
+        <p className="text-[10px] text-muted-foreground/50">No documents uploaded for this canal</p>
       ) : (
         <div className="space-y-1">
           {docs.map((d, i) => (
@@ -482,6 +548,8 @@ export function StepPortRotation({ data, onChange }: Props) {
           { type: 'dardanelles', label: 'Dardanelles', flagged: hasDardanelles },
         ] as const).map(({ type, label, flagged }) => {
           const cc = canalCosts.find((c) => c.canalType === type);
+          const diff = cc ? (cc.finalCost || 0) - (cc.proformaCost || 0) : 0;
+          const hasFinal = cc && cc.finalCost > 0;
           return (
             <div key={type} className={`p-3 rounded-lg border transition-colors ${flagged ? 'border-amber-400/30 bg-amber-400/5' : 'border-border/50'}`}>
               <div className="flex items-center gap-3 mb-2">
@@ -491,20 +559,44 @@ export function StepPortRotation({ data, onChange }: Props) {
                 </label>
               </div>
               {cc && (
-                <div className="grid grid-cols-2 gap-3 ml-6">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Proforma ($)</p>
-                    <input type="number" min={0} value={cc.proformaCost || ''}
-                      onChange={(e) => updateCanalCost(cc.id, { proformaCost: parseFloat(e.target.value) || 0 })}
-                      className={inputCls} />
+                <>
+                  {/* Cost row: Proforma / Final / Difference */}
+                  <div className="grid grid-cols-3 gap-3 ml-6">
+                    <div>
+                      <p className="text-[10px] text-blue-400/80 font-medium mb-1">Forecast ($)</p>
+                      <input type="number" min={0} value={cc.proformaCost || ''}
+                        onChange={(e) => updateCanalCost(cc.id, { proformaCost: parseFloat(e.target.value) || 0 })}
+                        className={inputCls} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground font-medium mb-1">Final ($)</p>
+                      <input type="number" min={0} value={cc.finalCost || ''}
+                        onChange={(e) => updateCanalCost(cc.id, { finalCost: parseFloat(e.target.value) || 0 })}
+                        className={inputCls} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground font-medium mb-1">Difference ($)</p>
+                      <div className={`px-2 py-1 rounded border text-xs font-mono text-right ${
+                        !hasFinal
+                          ? 'border-border/30 text-muted-foreground/30'
+                          : diff > 0
+                          ? 'border-red-400/30 text-red-400 bg-red-400/5'
+                          : diff < 0
+                          ? 'border-green-400/30 text-green-400 bg-green-400/5'
+                          : 'border-border/30 text-muted-foreground'
+                      }`}>
+                        {hasFinal ? `${diff > 0 ? '+' : ''}${diff.toLocaleString()}` : '—'}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Final ($)</p>
-                    <input type="number" min={0} value={cc.finalCost || ''}
-                      onChange={(e) => updateCanalCost(cc.id, { finalCost: parseFloat(e.target.value) || 0 })}
-                      className={inputCls} />
-                  </div>
-                </div>
+
+                  {/* Document uploader */}
+                  <CanalDocuments
+                    cc={cc}
+                    voyageNumber={data.voyageNumber ?? 'DRAFT'}
+                    onUpdate={(docs) => updateCanalCost(cc.id, { canalDocuments: docs })}
+                  />
+                </>
               )}
             </div>
           );
