@@ -1,5 +1,14 @@
 import { NextResponse } from 'next/server';
 
+/**
+ * Fetches Baltic Exchange freight indices from Stooq.
+ * Yahoo Finance does NOT carry BDI/BSI/BHSI (proprietary Baltic Exchange data).
+ * Stooq provides daily end-of-day values for these indices.
+ *
+ * Stooq symbols: bdi.i, bci.i, bsi.i, bhsi.i
+ * Endpoint: https://stooq.com/q/l/?s=bdi.i&f=sd2t2ohlcv&h&e=json
+ */
+
 export interface BdiIndex {
   symbol: string;
   price: number;
@@ -11,43 +20,48 @@ export interface BdiIndex {
 const cache = new Map<string, { data: BdiIndex[]; expiresAt: number }>();
 const TTL_MS = 30 * 60 * 1000;
 
-const INDICES: { key: string; ticker: string }[] = [
-  { key: 'BDI',  ticker: '%5EBDIY' },
-  { key: 'BCI',  ticker: '%5EBCI'  },
-  { key: 'BSI',  ticker: '%5EBSI'  },
-  { key: 'BHSI', ticker: '%5EBHSI' },
+const INDICES: { label: string; stooqSymbol: string }[] = [
+  { label: 'BDI',  stooqSymbol: 'bdi.i'  },
+  { label: 'BCI',  stooqSymbol: 'bci.i'  },
+  { label: 'BSI',  stooqSymbol: 'bsi.i'  },
+  { label: 'BHSI', stooqSymbol: 'bhsi.i' },
 ];
 
-const HEADERS = {
-  'User-Agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
-    '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-  'Accept': 'application/json',
-  'Accept-Language': 'en-US,en;q=0.9',
-};
-
-async function fetchOne(key: string, ticker: string): Promise<BdiIndex | null> {
-  const url =
-    `https://query2.finance.yahoo.com/v8/finance/chart/${ticker}` +
-    `?interval=1d&range=2d&includePrePost=false`;
-
+async function fetchStooq(label: string, symbol: string): Promise<BdiIndex | null> {
+  // Fetch last 2 days so we can compute daily change
+  const url = `https://stooq.com/q/d/l/?s=${encodeURIComponent(symbol)}&i=d`;
   try {
     const res = await fetch(url, {
-      headers: HEADERS,
-      signal: AbortSignal.timeout(8000),
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'text/plain,text/csv,*/*',
+        'Referer': 'https://stooq.com/',
+      },
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) return null;
 
-    const json = await res.json();
-    const meta  = json?.chart?.result?.[0]?.meta;
-    if (!meta) return null;
+    // Stooq returns CSV: Date,Open,High,Low,Close,Volume
+    const text = await res.text();
+    const lines = text.trim().split('\n').filter(Boolean);
+    if (lines.length < 2) return null; // Only header
 
-    const price      = meta.regularMarketPrice ?? 0;
-    const prevClose  = meta.previousClose ?? meta.chartPreviousClose ?? price;
-    const change     = price - prevClose;
-    const changePct  = prevClose !== 0 ? (change / prevClose) * 100 : 0;
+    // Last line = most recent, second-to-last = previous day
+    const parse = (line: string) => {
+      const parts = line.split(',');
+      return { date: parts[0], close: parseFloat(parts[4]) };
+    };
 
-    return { symbol: key, price, change, changePercent: changePct };
+    const latest = parse(lines[lines.length - 1]);
+    const prev   = lines.length >= 3 ? parse(lines[lines.length - 2]) : null;
+
+    if (!latest || isNaN(latest.close) || latest.close <= 0) return null;
+
+    const prevClose = prev && !isNaN(prev.close) && prev.close > 0 ? prev.close : latest.close;
+    const change    = latest.close - prevClose;
+    const changePct = prevClose !== 0 ? (change / prevClose) * 100 : 0;
+
+    return { symbol: label, price: latest.close, change, changePercent: changePct };
   } catch {
     return null;
   }
@@ -62,9 +76,10 @@ export async function GET() {
   }
 
   const results = await Promise.all(
-    INDICES.map(({ key, ticker }) => fetchOne(key, ticker))
+    INDICES.map(({ label, stooqSymbol }) => fetchStooq(label, stooqSymbol)),
   );
   const data = results.filter(Boolean) as BdiIndex[];
+
   if (data.length > 0) {
     cache.set('bdi', { data, expiresAt: Date.now() + TTL_MS });
   }

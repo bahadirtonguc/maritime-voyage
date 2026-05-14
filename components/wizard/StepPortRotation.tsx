@@ -7,6 +7,7 @@ import type { PortCall, PortRole, CanalCost, Voyage } from '@/types';
 import type { Port } from '@/types';
 import { generateId } from '@/lib/utils';
 import { PortAutocomplete } from './PortAutocomplete';
+import { PortFlagInline } from '@/components/PortFlagInline';
 import portsData from '@/data/ports.json';
 
 const VoyageMap = dynamic(() => import('./VoyageMap').then((m) => m.VoyageMap), {
@@ -291,6 +292,7 @@ export function StepPortRotation({ data, onChange }: Props) {
                   <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab shrink-0"
                     onClick={(e) => e.stopPropagation()} />
                   <span className="text-xs font-mono text-muted-foreground w-5 text-center shrink-0">{idx + 1}</span>
+                  {pc.portName && <PortFlagInline portName={pc.portName} className="text-base shrink-0" />}
 
                   <select value={pc.role}
                     onChange={(e) => updatePort(pc.id, { role: e.target.value as PortRole })}
