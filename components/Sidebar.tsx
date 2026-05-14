@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Ship, LayoutDashboard, Plus, ChevronLeft, ChevronRight,
-  LogOut, TrendingUp,
+  LogOut,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useVoyages } from '@/hooks/useVoyages';
@@ -66,7 +66,6 @@ export function Sidebar() {
       <nav className="px-1.5 py-1.5 border-b border-border space-y-0.5">
         <NavItem href="/" icon={<LayoutDashboard className="h-3.5 w-3.5" />} label="Dashboard" collapsed={collapsed} active={pathname === '/'} />
         <NavItem href="/voyages/new" icon={<Plus className="h-3.5 w-3.5" />} label="New Voyage" collapsed={collapsed} active={pathname === '/voyages/new'} />
-        <NavItem href="/variance" icon={<TrendingUp className="h-3.5 w-3.5" />} label="Variance" collapsed={collapsed} active={pathname === '/variance'} />
       </nav>
 
       {/* Compact voyage list */}
@@ -137,7 +136,7 @@ export function Sidebar() {
 
       {/* Copyright */}
       {!collapsed && (
-        <p className="text-[9px] text-muted-foreground/30 text-center pb-1 select-none">© Bero 2026</p>
+        <p className="text-[10px] text-muted-foreground/50 text-center py-1.5 select-none">© Bero 2026</p>
       )}
 
       {/* Footer */}
