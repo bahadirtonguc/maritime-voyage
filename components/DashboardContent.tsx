@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Chart as ChartJS,
@@ -208,7 +208,9 @@ function MiniStats({ voyages, pnlMap }: {
     <div className="flex-1 grid grid-cols-2 grid-rows-2" style={{ minHeight: 0 }}>
       <Cell label="Total D/A"   val={formatCurrency(totalDa, 0)}     color={C.coral} />
       <Cell label="Canal Costs" val={formatCurrency(totalCanals, 0)}  color={C.amber} />
-      <Cell label="Top Port"    val={highPort} sub={highPortCost > 0 ? formatCurrency(highPortCost, 0) : undefined} color={C.blue} />
+      <Cell label="Highest Cost Port"
+        val={highPortCost > 0 ? `${highPort} — ${formatCurrency(highPortCost, 0)}` : '—'}
+        color={C.blue} />
       <Cell label="Avg GM %"    val={avgGmPct !== null ? `${avgGmPct.toFixed(1)}%` : '—'}
         color={avgGmPct !== null && avgGmPct >= 0 ? C.teal : C.coral} />
     </div>
@@ -330,7 +332,7 @@ function RadarChart({ voyages, pnlMap }: {
             ticks: { display: false, stepSize: 25 },
             grid: { color: 'rgba(255,255,255,0.08)' },
             angleLines: { color: 'rgba(255,255,255,0.08)' },
-            pointLabels: { color: C.muted, font: { size: 8 } },
+            pointLabels: { color: C.muted, font: { size: 10 }, padding: 12 },
           },
         },
         plugins: {
@@ -339,6 +341,96 @@ function RadarChart({ voyages, pnlMap }: {
         },
       }}
     />
+  );
+}
+
+/* ─── Time helper ──────────────────────────────────────────────── */
+function timeAgo(date: Date): string {
+  const diffMs   = Date.now() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60_000);
+  if (diffMins < 1)  return 'just now';
+  if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+  const diffHrs  = Math.floor(diffMins / 60);
+  if (diffHrs  < 24) return `${diffHrs} hr${diffHrs > 1 ? 's' : ''} ago`;
+  const diffDays = Math.floor(diffHrs / 24);
+  return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+}
+
+/* ─── News Ticker ──────────────────────────────────────────────── */
+interface NewsItem { title: string; link: string }
+
+function NewsTicker() {
+  const [feed, setFeed]             = useState<'dry' | 'africa'>('dry');
+  const [items, setItems]           = useState<NewsItem[]>([]);
+  const [loadingNews, setLoading]   = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/news?feed=${feed}`)
+      .then((r) => r.json())
+      .then((d) => setItems(d.items ?? []))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, [feed]);
+
+  const duration = Math.max(10, (items.length || 5) * 3);
+
+  return (
+    <div className="flex flex-col px-4 py-3 rounded-xl border overflow-hidden"
+      style={{ background: C.card, borderColor: C.bd }}>
+      <style>{`
+        @keyframes tickerScroll {
+          0%   { transform: translateY(0); }
+          100% { transform: translateY(-50%); }
+        }
+      `}</style>
+
+      {/* Header row */}
+      <div className="flex items-center justify-between mb-2 shrink-0">
+        <span className="text-[9px] uppercase tracking-widest font-semibold" style={{ color: C.muted }}>
+          Shipping News
+        </span>
+        <div className="flex gap-1">
+          {(['dry', 'africa'] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFeed(f)}
+              className="px-2 py-0.5 rounded text-[9px] font-semibold uppercase transition-colors"
+              style={{
+                background: feed === f ? C.blue : C.deep,
+                color: feed === f ? '#fff' : C.muted,
+              }}
+            >
+              {f === 'dry' ? 'Dry Cargo' : 'Africa'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Ticker body */}
+      <div className="overflow-hidden flex-1" style={{ position: 'relative' }}>
+        {loadingNews ? (
+          <p className="text-[9px] mt-1" style={{ color: C.muted }}>Loading…</p>
+        ) : items.length === 0 ? (
+          <p className="text-[9px] mt-1" style={{ color: C.muted }}>No news available</p>
+        ) : (
+          <div style={{ animation: `tickerScroll ${duration}s linear infinite` }}>
+            {[...items, ...items].map((item, i) => (
+              <a
+                key={i}
+                href={item.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block py-1 truncate text-[10px] hover:underline"
+                style={{ color: C.text, borderBottom: `1px solid ${C.bd}` }}
+              >
+                {item.title}
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -361,6 +453,12 @@ export function DashboardContent() {
     ? deviating.reduce((s, v) => s + (pnlMap.get(v.id)?.costVariancePercent ?? 0), 0) / deviating.length
     : null;
 
+  const lastUpdated = useMemo(() => {
+    if (voyages.length === 0) return null;
+    const ts = voyages.map((v) => v.updatedAt ? new Date(v.updatedAt).getTime() : 0);
+    return new Date(Math.max(...ts));
+  }, [voyages]);
+
   const selected = trackable.find((v) => v.id === selectedId) ?? null;
   const imo = selected?.imoNumber?.replace(/\D/g, '') || null;
 
@@ -374,7 +472,14 @@ export function DashboardContent() {
         style={{ borderColor: C.bd, background: C.card }}>
         <div className="flex items-center gap-2">
           <Anchor className="h-4 w-4" style={{ color: C.blue }} />
-          <span className="text-sm font-bold text-white tracking-wide">Fleet Overview</span>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold text-white tracking-wide">Fleet Overview</span>
+            {!loading && lastUpdated && (
+              <span className="text-[9px]" style={{ color: C.muted }}>
+                Last updated: {timeAgo(lastUpdated)}
+              </span>
+            )}
+          </div>
           {!loading && <span className="text-xs ml-1" style={{ color: C.muted }}>· {voyages.length} voyages</span>}
         </div>
         <Link href="/voyages/new"
@@ -386,19 +491,20 @@ export function DashboardContent() {
 
       <div className="flex-1 flex flex-col p-4 gap-3 min-h-0 overflow-hidden">
 
-        {/* ── Row 1: KPI tiles (2, full width) ── */}
-        <div className="shrink-0 grid grid-cols-2 gap-3">
+        {/* ── Row 1: KPI tiles (3, full width) ── */}
+        <div className="shrink-0 grid grid-cols-3 gap-3">
           <KpiTile icon={<Ship className="h-3.5 w-3.5" />} label="Active Voyages"
             value={loading ? '—' : String(activeVoyages.length)}
             sub={`${trackable.length} active+planned`} valueColor={C.blue} />
+          <NewsTicker />
           <KpiTile icon={<AlertTriangle className="h-3.5 w-3.5" />} label="Avg Cost Deviation"
             value={loading || avgDev === null ? '—' : `${avgDev >= 0 ? '+' : ''}${avgDev.toFixed(1)}%`}
-            sub={`${deviating.length} voyages with cost data`}
-            valueColor={avgDev === null ? C.muted : Math.abs(avgDev) <= 5 ? C.green : Math.abs(avgDev) <= 10 ? C.amber : C.coral} />
+            sub="− = under budget · + = over budget"
+            valueColor={avgDev === null ? C.muted : avgDev < 0 ? C.green : avgDev <= 5 ? C.amber : C.coral} />
         </div>
 
         {/* ── Row 2: 4 columns, 190px ── */}
-        <div className="shrink-0 grid gap-3" style={{ gridTemplateColumns: '1fr 1fr 1fr 2fr', height: 190 }}>
+        <div className="shrink-0 grid gap-3" style={{ gridTemplateColumns: '1fr 1fr 1fr 2fr', height: 280 }}>
 
           {/* Gauge */}
           <Card title="Net Result" className="overflow-hidden">

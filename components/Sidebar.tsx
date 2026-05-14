@@ -117,10 +117,10 @@ export function Sidebar() {
                       <p className="text-[12px] font-bold text-foreground truncate leading-tight">{v.vesselName}</p>
                       <p className="text-[11px] text-muted-foreground truncate leading-tight">{route}</p>
                     </div>
-                    <span className={cn(
-                      'text-[11px] font-bold tabular-nums shrink-0',
-                      pnl.netVoyageResult >= 0 ? 'text-green-400' : 'text-red-400'
-                    )}>
+                    <span
+                      className="text-[11px] font-bold tabular-nums shrink-0"
+                      style={{ color: pnl.netVoyageResult >= 0 ? '#22c55e' : '#e05252' }}
+                    >
                       {formatCurrency(pnl.netVoyageResult, 0)}
                     </span>
                   </Link>
