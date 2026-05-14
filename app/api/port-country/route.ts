@@ -18,7 +18,9 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(port)}&format=json&limit=1&featuretype=settlement`;
+    // addressdetails=1 is required — without it, country_code is NOT included in the response.
+    // The country code is nested under result[0].address.country_code
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(port)}&format=json&limit=1&addressdetails=1`;
     const res = await fetch(url, {
       headers: {
         'User-Agent': 'maritime-voyage-app',
@@ -33,8 +35,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ code: '' });
     }
 
-    const data: Array<{ country_code?: string }> = await res.json();
-    const code = (data[0]?.country_code ?? '').toUpperCase().slice(0, 2);
+    const data: Array<{ address?: { country_code?: string } }> = await res.json();
+    const code = (data[0]?.address?.country_code ?? '').toUpperCase().slice(0, 2);
     cache[key] = code;
     return NextResponse.json({ code });
   } catch {
