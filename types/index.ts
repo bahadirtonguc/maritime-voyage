@@ -111,6 +111,10 @@ export interface CanalCost {
   canalType: 'suez' | 'bosphorus' | 'dardanelles';
   proformaCost: number;
   finalCost: number;
+  agentCompany?: string;
+  agentName?: string;
+  agentEmail?: string;
+  agentPhone?: string;
   canalDocuments?: { name: string; url: string; uploadedAt: string }[];
 }
 

@@ -590,6 +590,37 @@ export function StepPortRotation({ data, onChange }: Props) {
                     </div>
                   </div>
 
+                  {/* Agent Details */}
+                  <div className="ml-6 mt-3 space-y-2">
+                    <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Agent Details</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground mb-1">Agent Company</p>
+                        <input type="text" value={cc.agentCompany ?? ''}
+                          onChange={(e) => updateCanalCost(cc.id, { agentCompany: e.target.value })}
+                          className="w-full px-2 py-1.5 bg-background border border-border rounded text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground mb-1">Contact Name</p>
+                        <input type="text" value={cc.agentName ?? ''}
+                          onChange={(e) => updateCanalCost(cc.id, { agentName: e.target.value })}
+                          className="w-full px-2 py-1.5 bg-background border border-border rounded text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground mb-1">Email</p>
+                        <input type="email" value={cc.agentEmail ?? ''}
+                          onChange={(e) => updateCanalCost(cc.id, { agentEmail: e.target.value })}
+                          className="w-full px-2 py-1.5 bg-background border border-border rounded text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground mb-1">Phone</p>
+                        <input type="text" value={cc.agentPhone ?? ''}
+                          onChange={(e) => updateCanalCost(cc.id, { agentPhone: e.target.value })}
+                          className="w-full px-2 py-1.5 bg-background border border-border rounded text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50" />
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Document uploader */}
                   <CanalDocuments
                     cc={cc}
