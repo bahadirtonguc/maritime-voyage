@@ -683,7 +683,7 @@ export function DashboardContent() {
           {/* Windy */}
           <div style={{ overflow: 'hidden', background: C.card, borderRadius: '8px', border: `1px solid ${C.bd}` }}>
             <iframe
-              src="https://embed.windy.com/embed2.html?lat=5&lon=15&zoom=4&level=surface&overlay=waves&menu=&message=true&marker=&calendar=&pressure=&type=map&location=coordinates&detail=&metricWind=kt&metricTemp=%C2%B0C&radarRange=-1"
+              src="https://embed.windy.com/embed2.html?lat=5&lon=15&zoom=4&level=surface&overlay=swell2&menu=&message=true&marker=&calendar=&pressure=&type=map&location=coordinates&detail=&metricWind=kt&metricTemp=%C2%B0C&radarRange=-1"
               title="Windy"
               style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
             />

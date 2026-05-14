@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Ship, LayoutDashboard, Plus, ChevronLeft, ChevronRight,
-  LogOut, Search, X,
+  LogOut, Search, X, Users,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useVoyages } from '@/hooks/useVoyages';
@@ -26,7 +26,15 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [filter, setFilter]   = useState<Filter>('all');
   const [search, setSearch]   = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const { voyages, loading }  = useVoyages();
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((r) => r.json())
+      .then((d) => { if (d.user?.role === 'admin') setIsAdmin(true); })
+      .catch(() => {});
+  }, []);
 
   const filtered = voyages.filter((v) => {
     if (filter !== 'all' && v.status !== filter) return false;
@@ -73,6 +81,9 @@ export function Sidebar() {
       <nav className="px-1.5 py-1.5 border-b border-border space-y-0.5">
         <NavItem href="/" icon={<LayoutDashboard className="h-3.5 w-3.5" />} label="Dashboard" collapsed={collapsed} active={pathname === '/'} />
         <NavItem href="/voyages/new" icon={<Plus className="h-3.5 w-3.5" />} label="New Voyage" collapsed={collapsed} active={pathname === '/voyages/new'} />
+        {isAdmin && (
+          <NavItem href="/admin/users" icon={<Users className="h-3.5 w-3.5" />} label="Users" collapsed={collapsed} active={pathname.startsWith('/admin')} />
+        )}
       </nav>
 
       {/* Search */}
