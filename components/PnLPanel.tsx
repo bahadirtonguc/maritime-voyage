@@ -11,9 +11,6 @@ interface Props {
 
 export function PnLPanel({ voyage }: Props) {
   const pnl = calculatePnL(voyage);
-  const threshold = voyage.deviationThreshold ?? 5;
-  const varianceOk = Math.abs(pnl.costVariancePercent) <= threshold;
-  const varianceWarn = Math.abs(pnl.costVariancePercent) > threshold && Math.abs(pnl.costVariancePercent) <= threshold * 2;
 
   const portCosts = (voyage.portRotation ?? []).reduce((sum, p) => {
     const fin = (p.finalDa ?? 0) + (p.finalPilotage ?? 0) + (p.finalTowage ?? 0) + (p.finalAgencyFee ?? 0)
@@ -50,16 +47,6 @@ export function PnLPanel({ voyage }: Props) {
           )}
           {canalCosts > 0 && (
             <Row label="Less: Straits & Canals" value={-canalCosts} color="red" />
-          )}
-
-          {pnl.totalProformaCosts > 0 && (
-            <div className={cn(
-              'flex items-center justify-between px-2 py-1 rounded text-[10px] mt-1',
-              varianceOk ? 'bg-green-400/10 text-green-400' : varianceWarn ? 'bg-amber-400/10 text-amber-400' : 'bg-red-400/10 text-red-400'
-            )}>
-              <span>Cost variance</span>
-              <span className="font-semibold">{pnl.costVariancePercent >= 0 ? '+' : ''}{pnl.costVariancePercent.toFixed(1)}%</span>
-            </div>
           )}
 
           <div className="border-t border-border pt-1.5">

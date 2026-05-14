@@ -70,7 +70,11 @@ export function calculateTotalFinalCosts(voyage: Partial<Voyage>): number {
 }
 
 export function calculatePnL(voyage: Partial<Voyage>): PnLSummary {
-  const freightIn = voyage.freightIn ?? 0;
+  // Derive freightIn from cargo net freight (after brokerage) when cargoes are present;
+  // fall back to the manually-entered voyage.freightIn for cargo-free voyages.
+  const freightIn = (voyage.cargoes && voyage.cargoes.length > 0)
+    ? calculateGrossFreight(voyage) - calculateTotalBrokerage(voyage)
+    : (voyage.freightIn ?? 0);
   const freightOut = voyage.freightOut ?? 0;
   const grossMargin = freightIn - freightOut;
   const totalProformaCosts = calculateTotalProformaCosts(voyage);

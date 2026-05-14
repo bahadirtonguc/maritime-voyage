@@ -38,7 +38,7 @@ interface Props {
 export function VoyageDashboard({ voyage }: Props) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [exporting, setExporting] = useState<'pdf' | 'excel' | null>(null);
-  const [showRemarks, setShowRemarks] = useState(false);
+  const [showRemarks, setShowRemarks] = useState(true);
   const [appointmentPort, setAppointmentPort] = useState<PortCall | null>(null);
   const { deleteVoyage } = useVoyages();
   const { toast } = useToast();
@@ -226,6 +226,11 @@ export function VoyageDashboard({ voyage }: Props) {
                 {showRemarks ? '▾' : '▸'} Remarks & Documents
               </button>
               {showRemarks && <div className="mt-3"><RemarksSection voyage={voyage} /></div>}
+            </div>
+
+            {/* Copyright */}
+            <div className="mt-auto px-4 py-3 border-t border-border/40">
+              <p className="text-[10px] text-muted-foreground/30 select-none">© Bero 2026</p>
             </div>
           </div>
 

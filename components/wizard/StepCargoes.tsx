@@ -91,6 +91,13 @@ export function StepCargoes({ data, onChange }: Props) {
   const loadPorts      = portRotation.filter((p) => p.role === 'load').map((p) => p.portName).filter(Boolean);
   const dischargePorts = portRotation.filter((p) => p.role === 'discharge').map((p) => p.portName).filter(Boolean);
 
+  function computeNetFreightIn(cargoList: Cargo[]): number {
+    return cargoList.reduce((sum, c) => {
+      const gross = c.freightType === 'lumpsum' ? c.freightRate : c.freightRate * c.quantity;
+      return sum + gross - (gross * c.brokeragePercent) / 100;
+    }, 0);
+  }
+
   function update(id: string, updates: Partial<Cargo>) {
     const updated = cargoes.map((c) => {
       if (c.id !== id) return c;
@@ -99,7 +106,7 @@ export function StepCargoes({ data, onChange }: Props) {
       m.dischargingPorts = (m.dischargingPortDAs ?? []).map((p) => p.portName).filter(Boolean);
       return m;
     });
-    onChange({ ...data, cargoes: updated });
+    onChange({ ...data, cargoes: updated, freightIn: computeNetFreightIn(updated) });
   }
 
   // ── Freight totals ──
@@ -119,7 +126,7 @@ export function StepCargoes({ data, onChange }: Props) {
           <h2 className="text-base font-semibold text-foreground">Cargoes & Freight</h2>
           <p className="text-xs text-muted-foreground mt-0.5">Each cargo lot is defined independently</p>
         </div>
-        <button type="button" onClick={() => onChange({ ...data, cargoes: [...cargoes, emptyCargoRow()] })}
+        <button type="button" onClick={() => { const next = [...cargoes, emptyCargoRow()]; onChange({ ...data, cargoes: next, freightIn: computeNetFreightIn(next) }); }}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary rounded-lg text-xs font-medium transition-colors">
           <Plus className="h-3.5 w-3.5" /> Add Cargo
         </button>
@@ -143,7 +150,7 @@ export function StepCargoes({ data, onChange }: Props) {
             <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-background/20">
               <span className="text-sm font-semibold text-foreground">Cargo #{idx + 1}</span>
               <button type="button"
-                onClick={() => onChange({ ...data, cargoes: cargoes.filter((c) => c.id !== cargo.id) })}
+                onClick={() => { const next = cargoes.filter((c) => c.id !== cargo.id); onChange({ ...data, cargoes: next, freightIn: computeNetFreightIn(next) }); }}
                 className="p-1 text-muted-foreground hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
@@ -196,13 +203,11 @@ export function StepCargoes({ data, onChange }: Props) {
                   <input type="text" value={cargo.chartererAddress} onChange={(e) => update(cargo.id, { chartererAddress: e.target.value })} className={inputCls} />
                 </Field>
 
-                {gross > 0 && (
-                  <div className="grid grid-cols-3 gap-2 text-xs p-2.5 bg-primary/5 rounded-lg border border-primary/10">
-                    <div><p className="text-muted-foreground text-[10px]">Gross</p><p className="font-semibold">${gross.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p></div>
-                    <div><p className="text-muted-foreground text-[10px]">Brokerage</p><p className="text-amber-400 font-semibold">${brok.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p></div>
-                    <div><p className="text-muted-foreground text-[10px]">Net Freight In</p><p className="text-green-400 font-semibold">${net.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p></div>
-                  </div>
-                )}
+                <div className="grid grid-cols-3 gap-2 text-xs p-2.5 bg-primary/5 rounded-lg border border-primary/10">
+                  <div><p className="text-muted-foreground text-[10px]">Total Freight</p><p className="font-semibold">${gross.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p></div>
+                  <div><p className="text-muted-foreground text-[10px]">Brokerage</p><p className="text-amber-400 font-semibold">${brok.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p></div>
+                  <div><p className="text-muted-foreground text-[10px]">Net Freight In</p><p className="text-green-400 font-semibold">${net.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p></div>
+                </div>
               </div>
 
               {/* RIGHT — Ports */}
