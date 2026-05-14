@@ -6,6 +6,65 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY!
 );
 
+// ── Permission types ────────────────────────────────────────────────────────
+export type VoyagePerm = 'view' | 'edit';
+export interface VoyagePermEntry {
+  id: string;
+  voyage_id: string;
+  username: string;
+  permission: VoyagePerm;
+  granted_at: string;
+}
+
+// ── Permission helpers ───────────────────────────────────────────────────────
+
+/** All permissions for a single voyage (admin panel use). */
+export async function getVoyagePermissions(voyageId: string): Promise<VoyagePermEntry[]> {
+  const { data } = await supabase
+    .from('voyage_permissions')
+    .select('*')
+    .eq('voyage_id', voyageId)
+    .order('granted_at', { ascending: true });
+  return (data ?? []) as VoyagePermEntry[];
+}
+
+/** Check what permission a user has for a voyage. Returns null if none. */
+export async function getUserVoyagePerm(voyageId: string, username: string): Promise<VoyagePerm | null> {
+  const { data } = await supabase
+    .from('voyage_permissions')
+    .select('permission')
+    .eq('voyage_id', voyageId)
+    .eq('username', username)
+    .single();
+  return (data?.permission as VoyagePerm) ?? null;
+}
+
+/** Grant or update a user's permission for a voyage. */
+export async function setVoyagePermission(voyageId: string, username: string, permission: VoyagePerm): Promise<void> {
+  const { error } = await supabase
+    .from('voyage_permissions')
+    .upsert({ voyage_id: voyageId, username, permission }, { onConflict: 'voyage_id,username' });
+  if (error) throw error;
+}
+
+/** Revoke a user's access to a voyage. */
+export async function removeVoyagePermission(voyageId: string, username: string): Promise<void> {
+  await supabase
+    .from('voyage_permissions')
+    .delete()
+    .eq('voyage_id', voyageId)
+    .eq('username', username);
+}
+
+/** Get all voyage IDs a user has any permission for. */
+export async function getUserPermittedVoyageIds(username: string): Promise<string[]> {
+  const { data } = await supabase
+    .from('voyage_permissions')
+    .select('voyage_id')
+    .eq('username', username);
+  return (data ?? []).map((r) => r.voyage_id as string);
+}
+
 // Voyages
 export async function getVoyages(): Promise<Voyage[]> {
   const { data, error } = await supabase

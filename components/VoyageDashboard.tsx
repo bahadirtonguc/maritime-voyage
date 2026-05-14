@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Edit, Download, FileSpreadsheet, Trash2, Loader2, FileText } from 'lucide-react';
-import { useState } from 'react';
+import { Edit, Download, FileSpreadsheet, Trash2, Loader2, FileText, Users, Eye, Pencil, X, ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { StatusBadge } from './StatusBadge';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -30,6 +30,149 @@ function devStatus(dev: number, threshold: number) {
   return Math.abs(dev) <= threshold ? 'ok' : Math.abs(dev) <= threshold * 2 ? 'warn' : 'danger';
 }
 
+
+// ── Voyage Permissions Panel (admin only) ──────────────────────────────────
+interface PermEntry { id: string; username: string; permission: 'view' | 'edit'; granted_at: string }
+interface AvailUser { username: string; name: string }
+
+function VoyagePermissions({ voyageId }: { voyageId: string }) {
+  const [open, setOpen]           = useState(false);
+  const [perms, setPerms]         = useState<PermEntry[]>([]);
+  const [users, setUsers]         = useState<AvailUser[]>([]);
+  const [isAdmin, setIsAdmin]     = useState(false);
+  const [loading, setLoading]     = useState(false);
+  const [selected, setSelected]   = useState('');
+  const [perm, setPerm]           = useState<'view' | 'edit'>('view');
+  const [saving, setSaving]       = useState(false);
+
+  // Check if current user is admin
+  useEffect(() => {
+    fetch('/api/auth/me').then(r => r.json()).then(d => {
+      if (d.user?.role === 'admin') setIsAdmin(true);
+    }).catch(() => {});
+  }, []);
+
+  async function load() {
+    setLoading(true);
+    const res = await fetch(`/api/voyages/${voyageId}/permissions`);
+    const data = await res.json();
+    setPerms(data.permissions ?? []);
+    setUsers(data.users ?? []);
+    setLoading(false);
+  }
+
+  function toggleOpen() {
+    if (!open && perms.length === 0) load();
+    setOpen(v => !v);
+  }
+
+  async function grant() {
+    if (!selected) return;
+    setSaving(true);
+    await fetch(`/api/voyages/${voyageId}/permissions`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: selected, permission: perm }),
+    });
+    await load();
+    setSelected('');
+    setSaving(false);
+  }
+
+  async function revoke(username: string) {
+    await fetch(`/api/voyages/${voyageId}/permissions`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    });
+    await load();
+  }
+
+  async function changePerm(username: string, permission: 'view' | 'edit') {
+    await fetch(`/api/voyages/${voyageId}/permissions`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, permission }),
+    });
+    await load();
+  }
+
+  if (!isAdmin) return null;
+
+  const granted = new Set(perms.map(p => p.username));
+  const available = users.filter(u => !granted.has(u.username));
+
+  return (
+    <div className="p-4 border-t border-border">
+      <button onClick={toggleOpen}
+        className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground hover:text-foreground transition-colors w-full">
+        {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+        <Users className="h-3 w-3" /> User Access
+        {perms.length > 0 && (
+          <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-bold">{perms.length}</span>
+        )}
+      </button>
+
+      {open && (
+        <div className="mt-3 space-y-3">
+          {loading ? (
+            <p className="text-[10px] text-muted-foreground animate-pulse">Loading…</p>
+          ) : perms.length === 0 ? (
+            <p className="text-[10px] text-muted-foreground/60">No users have access to this voyage.</p>
+          ) : (
+            <div className="space-y-1">
+              {perms.map(p => (
+                <div key={p.username} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-background/50 border border-border/50">
+                  <span className="text-xs text-foreground flex-1 truncate">@{p.username}</span>
+                  <select
+                    value={p.permission}
+                    onChange={e => changePerm(p.username, e.target.value as 'view' | 'edit')}
+                    className="text-[10px] bg-background border border-border rounded px-1 py-0.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50">
+                    <option value="view">View</option>
+                    <option value="edit">Edit</option>
+                  </select>
+                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border ${p.permission === 'edit' ? 'bg-amber-400/10 text-amber-400 border-amber-400/20' : 'bg-blue-400/10 text-blue-400 border-blue-400/20'}`}>
+                    {p.permission === 'edit' ? <><Pencil className="h-2.5 w-2.5 inline mr-0.5" />Edit</> : <><Eye className="h-2.5 w-2.5 inline mr-0.5" />View</>}
+                  </span>
+                  <button onClick={() => revoke(p.username)}
+                    className="text-muted-foreground hover:text-red-400 transition-colors shrink-0">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add user */}
+          {available.length > 0 && (
+            <div className="flex items-center gap-2 pt-1">
+              <select value={selected} onChange={e => setSelected(e.target.value)}
+                className="flex-1 min-w-0 text-xs bg-background border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50">
+                <option value="">Add user…</option>
+                {available.map(u => <option key={u.username} value={u.username}>{u.name} (@{u.username})</option>)}
+              </select>
+              <select value={perm} onChange={e => setPerm(e.target.value as 'view' | 'edit')}
+                className="text-xs bg-background border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 shrink-0">
+                <option value="view">View</option>
+                <option value="edit">Edit</option>
+              </select>
+              <button onClick={grant} disabled={!selected || saving}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-colors disabled:opacity-40 shrink-0">
+                <Plus className="h-3 w-3" /> Grant
+              </button>
+            </div>
+          )}
+          {available.length === 0 && !loading && users.length > 0 && perms.length > 0 && (
+            <p className="text-[10px] text-muted-foreground/50">All approved users already have access.</p>
+          )}
+          {users.length === 0 && !loading && (
+            <p className="text-[10px] text-muted-foreground/50">No other approved users to add.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface Props {
   voyage: Voyage;
@@ -221,6 +364,9 @@ export function VoyageDashboard({ voyage }: Props) {
 
             {/* P&L */}
             <PnlSummary voyage={voyage} pnl={pnl} />
+
+            {/* User Access (admin only) */}
+            <VoyagePermissions voyageId={voyage.id} />
 
             {/* Remarks toggle */}
             <div className="p-4">
