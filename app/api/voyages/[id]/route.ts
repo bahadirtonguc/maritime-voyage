@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getVoyage, saveVoyage, deleteVoyage, getUserVoyagePerm } from '@/lib/storage';
+import { getVoyage, saveVoyage, deleteVoyage, getUserVoyagePerm, setVoyagePermission } from '@/lib/storage';
 import { verifyToken, COOKIE_NAME } from '@/lib/auth';
 
 async function authenticate(req: NextRequest) {
@@ -30,7 +30,16 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
   if (user.role !== 'admin') {
     const perm = await getUserVoyagePerm(params.id, user.username);
-    if (perm !== 'edit') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (perm !== 'edit') {
+      // The wizard pre-generates an id and always calls PUT — even for brand-new
+      // voyages. If the voyage doesn't exist yet, treat this as a first-time
+      // save and auto-grant edit permission to the creator.
+      const existing = await getVoyage(params.id);
+      if (existing) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      await setVoyagePermission(params.id, user.username, 'edit');
+    }
   }
 
   const voyage = await req.json();
